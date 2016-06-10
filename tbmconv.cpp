@@ -363,7 +363,23 @@ typedef struct {
 
 /* Word  8 */ uint64_t /* "open" */        : 60;
               uint64_t /* padding */       :  0;
-} FileHistoryWord;
+} FileHistoryWord_Data;
+
+typedef struct __attribute__((packed)) {
+	char dataSetID[17];
+	char padding1[19];
+	char useCount[2];
+	char versionNum[2];
+	char writePasswd[5];
+	char readPasswd[5];
+	char recordLen[5];
+	char maxRecordNum[5];
+	char creationYear[2];
+	char creationDay[3];
+	char expirationYear[2];
+	char expirationDay[3];
+	char padding2[10];
+} FileHistoryWord_Text;
 
 typedef struct {
 /* Word "9"*/ uint64_t wordsToFirstPtr     : 24; /** "Words to first pointer in data block N" */
@@ -468,6 +484,10 @@ int main(int argc, char **argv)
 	SYSLBN_Text syslbn_text;
 	uint8_t *inBuf;
 	size_t readAmount;
+	FileHistoryWord_Data fhw_data;
+	FileHistoryWord_Text fhw_text;
+	FileControlPointer fcp;
+	size_t offset;
 
 	DataBufferFlags dbf;
 	*((uint64_t*) &dbf) = 0x0000DC13AA00048;
@@ -489,7 +509,9 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	readAmount = DIV_CEIL(sizeof(SYSLBN_Text)*6,8);
+	fseek(fp, 0L, SEEK_END);
+	readAmount = ftell(fp);
+	fseek(fp, 0L, SEEK_SET);
 
 	if (!(inBuf = (uint8_t*) malloc(sizeof(uint8_t)*readAmount))) {
 		fprintf(stderr, "Error: \n");
@@ -525,6 +547,27 @@ int main(int argc, char **argv)
 	assert(syslbn_data.dataSetID_13_16 == MAGIC_1000);
 	assert(syslbn_data.dataSetID_17 == MAGIC_1);
 	assert(syslbn_data.hdr2 == MAGIC_HDR2);
+
+	/* The location of the first file control pointer is specified in the
+	 * SYSLBN.
+	 */
+
+	offset = syslbn_data.firstFCPOff * 60;
+
+	do {
+		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &fcp, offset%8,
+		                         60, 0, sizeof(FileControlPointer)/8);
+
+		// file history word always follows the FCP?
+		gbytes<uint8_t,uint64_t>(inBuf+((offset+60)/8), (uint64_t*) &fhw_data,
+		                         (offset+60)%8, 60, 0,
+		                         sizeof(FileHistoryWord_Data)/8);
+		gbytes<uint8_t,uint8_t>(inBuf+((offset+60)/8), (uint8_t*) &fhw_text,
+		                        (offset+60)%8, 6, 0,
+		                         sizeof(FileHistoryWord_Text));
+		cdc_decode((char*) &fhw_text, sizeof(FileHistoryWord_Text));
+		offset += fcp.nextFCPOff*60;
+	} while (!fcp.isEOF);
 
 	return 1;
 }
