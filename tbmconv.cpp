@@ -384,7 +384,11 @@ typedef struct __attribute__((packed)) {
 typedef struct {
 /* Word "9"*/ uint64_t wordsToFirstPtr     : 24; /** "Words to first pointer in data block N" */
               uint64_t lastRecord          : 21; /** "Last record starting in data block N" */
-              uint64_t /* "open" */        : 14;
+              // The next 14 bits are listed as "open" in the
+              // tech note, but 12 bits are listed as a checksum (LBCKS)
+              // in the assembly
+              uint64_t checksum            : 12;
+              uint64_t /* "open" */        :  2;
               uint64_t noRecordStartsHere  :  1; /** "ON means that no record starts in this block" */
               uint64_t /* padding */       :  0;
 
