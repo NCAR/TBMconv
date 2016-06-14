@@ -308,7 +308,7 @@ c###############################################################################
 *
 * verify label buffer and build directory.
 *
-      lbl=and(rb2(1),3777777b)
+      lbl=and(rb2(1),o'3777777')
       if (lbl.gt.16384) then
         ier=1
         go to 999
@@ -1007,9 +1007,9 @@ c###############################################################################
 *
 * pick off the sign, exponent, and mantissa.
 *
-        s=and(shiftr(a(i),59),1b)
-        e=and(shiftr(xor(a(i),-s),48),3777b)
-        m=and(xor(a(i),-s),7777777777777777b)
+        s=and(shiftr(a(i),59),o'1')
+        e=and(shiftr(xor(a(i),-s),48),o'3777')
+        m=and(xor(a(i),-s),o'7777777777777777')
 *
 * if the exponent of a(i) is precisely zero, generate a cray integer.
 *
@@ -1019,21 +1019,21 @@ c###############################################################################
 *
 * a(i) is real - check for indefinite, infinite, un-normalized.
 *
-  101   if (e.ne.1777b.and.e.ne.3777b.and.m.ge.4000000000000000b)
+  101   if (e.ne.o'1777'.and.e.ne.o'3777'.and.m.ge.o'4000000000000000')
      +                                                         go to 102
-        b(i)=or(shiftl(s,63),600004000000000000000b)
+        b(i)=or(shiftl(s,63),o'600004000000000000000')
 *
 * set lower bits to indicate problem which caused illegal real.
 *
-        if (e.eq.1777b) b(i)=or(b(i),4b)
-        if (e.eq.3777b) b(i)=or(b(i),2b)
-        if (m.lt.4000000000000000b) b(i)=or(b(i),1b)
+        if (e.eq.o'1777') b(i)=or(b(i),o'4')
+        if (e.eq.o'3777') b(i)=or(b(i),o'2')
+        if (m.lt.o'4000000000000000') b(i)=or(b(i),o'1')
         go to 103
 *
 * a(i) is real and nothing is wrong with it.
 *
-  102   if (e.lt.2000b) e=e+1
-        b(i)=or(or(shiftl(s,63),shiftl(36060b+e,48)),m)
+  102   if (e.lt.o'2000') e=e+1
+        b(i)=or(or(shiftl(s,63),shiftl(o'36060'+e,48)),m)
 *
 * end of loop.
 *
@@ -1211,16 +1211,16 @@ c###############################################################################
       ies=0
       do 703 i=81,80+mch
         if (ies.eq.0) then
-          if (rbc(i).eq.00b) go to 704
-          if (rbc(i).lt.64b) then
+          if (rbc(i).eq.o'00') go to 704
+          if (rbc(i).lt.o'64') then
             nch=nch+1
             rbc(nch)=rbc(i)
-          else if (rbc(i).ne.77b) then
-            nbl=rbc(i)-62b
+          else if (rbc(i).ne.o'77') then
+            nbl=rbc(i)-o'62'
             if (nbl.gt.10) nbl=10*(nbl-9)
             nbl=min0(nbl,80-nch)
             do 705 j=nch+1,nch+nbl
-              rbc(j)=55b
+              rbc(j)=o'55'
   705       continue
             nch=nch+nbl
           else
