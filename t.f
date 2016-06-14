@@ -6,10 +6,10 @@
 *                                                                      *
 * PURPOSE  The utility tbm2cos allows a Cray job to read TBM volumes   *
 *          written by the CDC 7600.  1) It unpacks the original        *
-*	   records of a desired file or files from the control-word    *
-*	   envelope created by the 7600.  2) It converts those         *
-*	   records from 7600 format to Cray format.  3) It writes      *
-*	   the resulting records to a user-specified Cray dataset.     *
+*          records of a desired file or files from the control-word    *
+*          envelope created by the 7600.  2) It converts those         *
+*          records from 7600 format to Cray format.  3) It writes      *
+*          the resulting records to a user-specified Cray dataset.     *
 *                                                                      *
 *          TBMCONV will not convert all 7600-written volumes to a      *
 *          form which is directly usable on the Cray.  Two cases come  *
@@ -28,26 +28,26 @@
 *          full-length original data records (which may then need to   *
 *          be operated upon by SCONV and/or MCONV, as well).           *
 *                                                                      *
-*     JCL  tbm2cos [-l] [-d] tbm cos				       *
+*     JCL  tbm2cos [-l] [-d] tbm cos                                   *
 *                                                                      *
 *     tbm  Specifies the dataset from which files are to be converted. *
 *          This dataset must contain a TBM volume written by the 7600  *
-*          This parameter is required.				       *
+*          This parameter is required.                                 *
 *                                                                      *
 *     cos  Name of the local dataset to receive the converted files.   *
 *          Separate files in the original volume become separate files *
-*	   on "odn".  This dataset is not rewound, either initially or *
-*	   at termination  This parameter is required.		       *
+*          on "odn".  This dataset is not rewound, either initially or *
+*          at termination  This parameter is required.                 *
 *                                                                      *
 *      -l  Directory control.  If this parameter appears, a directory  *
-*          of the dataset "idn" is produced on stdout.		       *
-*								       *
+*          of the dataset "idn" is produced on stdout.                 *
+*                                                                      *
 *      -d  Debug control.  If set, print the number and size of the    *
-*          records in each file on stdout.			       *
+*          records in each file on stdout.                             *
 *                                                                      *
 * Example: 
-*               msread blotto.tbm /MYDIR/subdir/blotto		       *
-*               tbm2cos blotto.tbm blotto		               *
+*               msread blotto.tbm /MYDIR/subdir/blotto                 *
+*               tbm2cos blotto.tbm blotto                              *
 *                                                                      *
 C----------------------------------------------------------------------*
 *                                                                      *
@@ -175,7 +175,7 @@ C----------------------------------------------------------------------*
 *          3. WRITE NAMED FILE DIRECTORY INFORMATION TO stdout.        *
 *                                                                      *
 *          4. BUILD THE FILE CONVERSION LIST FROM NAMED FILE           *
-*	      DIRECTORY (BCL).			                       *
+*             DIRECTORY (BCL).                                         *
 *                                                                      *
 *          5. CONVERT FILES ACCORDING TO THE FILE CONVERSION LIST AND  *
 *             CONTROL CARD OPTIONS (FCON).                             *
@@ -253,47 +253,47 @@ C----------------------------------------------------------------------*
 *
       nargs = iargc()
       if (nargs .eq. 0) then
-	 call pruse ()
-	 call exit (1)
+         call pruse ()
+         call exit (1)
       endif
       do 10 i = 1, nargs
       nc = getarg (i, arg, 8)
       if (arg .eq. "-l") then
-	 dof = 1
-	 ddn = 0
+         dof = 1
+         ddn = 0
       else if (arg(1:2) .eq. '-d') then
-	 do 9 j = 2, 8
-	    if (arg(j:j) .eq. 'd') debug = or (debug, dbm)
-	    dbm = shiftl (dbm, 1)
-    9	 continue
+         do 9 j = 2, 8
+            if (arg(j:j) .eq. 'd') debug = or (debug, dbm)
+            dbm = shiftl (dbm, 1)
+    9         continue
       else if (arg(1:1) .eq. '?' .or. arg(1:2) .eq. '-h'
-     x	      .or. arg(1:4) .eq. 'help' ) then
-	 call pruse ()
-	 call exit (0)
+     x              .or. arg(1:4) .eq. 'help' ) then
+         call pruse ()
+         call exit (0)
       else if (idn .ne. 5) then
-	 idn = 5
-	 call asnunit (idn, '-O -s u -a' // arg, ier)
-	 if (ier .ne. 0) then
-	    ier = 4
-	    go to 999
-	 endif
+         idn = 5
+         call asnunit (idn, '-O -s u -a' // arg, ier)
+         if (ier .ne. 0) then
+            ier = 4
+            go to 999
+         endif
       else if (odn .ne. 6) then
-	 odn = 6
-	 call asnunit (odn, '-O -a' // arg, ier)
-	 if (ier .ne. 0) then
-	    ier = 4
-	    go to 999
-	 endif
+         odn = 6
+         call asnunit (odn, '-O -a' // arg, ier)
+         if (ier .ne. 0) then
+            ier = 4
+            go to 999
+         endif
       else
-	 print '(" unknown arg ", a8)', arg
-	 call pruse ()
-	 call exit (2)
+         print '(" unknown arg ", a8)', arg
+         call pruse ()
+         call exit (2)
       endif
    10 continue
       if (odn .ne. 6) then
-	 print
-     x	 '("Both the input and output data sets must be specified!")'
-	 call exit (3)
+         print
+     x         '("Both the input and output data sets must be specified!")'
+         call exit (3)
       endif
 *
 * read the first record from the tbm volume (the label buffer).
@@ -745,9 +745,9 @@ c###############################################################################
 *
   103   rcw=bkb(bkbp)
         call vrcw(rcw,eof,lr,lwbc,rmode,fptr,jer)
-	if (and (debug, 2) .ne. 0) then
-	   call prrcw (rcw,eof,lr,lwbc,rmode,fptr,jer)
-	endif
+        if (and (debug, 2) .ne. 0) then
+           call prrcw (rcw,eof,lr,lwbc,rmode,fptr,jer)
+        endif
         if (jer.ne.0.or.fptr.eq.0) then
           ier=8
           return
@@ -833,7 +833,7 @@ c###############################################################################
 *
         if (mode.eq.8.and.trf.eq.0) then
           trf=1
-	  call asnunit (odn, '-I -s u', ier)
+          call asnunit (odn, '-I -s u', ier)
           if (jer.ne.0) then
             ier=10
             return
@@ -852,18 +852,18 @@ c###############################################################################
         else
           call uwodn(odn,rbc,rlc,bkbc,bkbcp,ier)
         end if
-	if (and (debug , 1) .ne. 0) then
-	   if (ll .ne. rlc) then
-	      if (ll .ne. 0) then
-		  print '(i9, " records sized ", i5)', lrc, ll
-	      endif
-	      ll = rlc
-	      lrc = 1
-	   else
-	      lrc = lrc + 1
-	   endif
-	   rcnt = rcnt + 1
-	endif
+        if (and (debug , 1) .ne. 0) then
+           if (ll .ne. rlc) then
+              if (ll .ne. 0) then
+                  print '(i9, " records sized ", i5)', lrc, ll
+              endif
+              ll = rlc
+              lrc = 1
+           else
+              lrc = lrc + 1
+           endif
+           rcnt = rcnt + 1
+        endif
         if (ier.ne.0) return
 *
 * go back for the next data record.
@@ -888,14 +888,14 @@ c###############################################################################
             return
           end if
         end if
-	if (and (debug , 1) .ne. 0) then
-	    if (ll .ne. 0) then
-	        print '(i9, " records sized ", i5)', lrc, ll
-	    endif
-	    ll = rlc
-	    lrc = 1
-	    print '("end file ",i5,i9," records")', i, rcnt
-	endif
+        if (and (debug , 1) .ne. 0) then
+            if (ll .ne. 0) then
+                print '(i9, " records sized ", i5)', lrc, ll
+            endif
+            ll = rlc
+            lrc = 1
+            print '("end file ",i5,i9," records")', i, rcnt
+        endif
 *
   109 continue
 *
@@ -1094,17 +1094,17 @@ c###############################################################################
       if (eoc .ne. 0) flags(16:16) = '?'
       brp = and (shiftr (rcw, 21), X'7FFFF')
       if (lwbc .ne. and (shiftr (rcw, 45), X'3f')) then
-	 print "(' lwbc wrong')"
+         print "(' lwbc wrong')"
       endif
       if (shiftr (epf, 57) .ne. eof) then
-	 print "(' eof wrong')"
+         print "(' eof wrong')"
       endif
       mode = and (shiftr (rcw, 40), x'1f')
       if (mode .ne. rmode) then
-	 print "(' mode wrong')"
+         print "(' mode wrong')"
       endif
       if (fptr .ne. and (rcw, X'1FFFFF')) then
-	 print "(' fptr wrong')"
+         print "(' fptr wrong')"
       endif
       print 1000, rcw, flags, lwbc, rmode, brp,fptr
  1000 format (z17,x,a16,2i3,2i8)
@@ -1307,7 +1307,7 @@ c###############################################################################
 *
       if (drp.le.0.or.rn.lt.drp-1) then
         if (drp.le.0) then
-	  call asnunit (odn, '-I -s u', ier)
+          call asnunit (odn, '-I -s u', ier)
           if (ier.ne.0) go to 901
         end if
         rewind dn
