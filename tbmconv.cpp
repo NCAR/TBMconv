@@ -352,7 +352,7 @@ typedef struct {
               uint64_t /* padding */       :  0;
 
 /* Word  6 */ uint64_t maxRecordNum        : 30; /** Maximum record number */
-              uint64_t recordLength        : 30; /** Record length */
+              uint64_t recordLen           : 30; /** Record length */
               uint64_t /* padding */       :  0;
 
 /* Word  7 */ uint64_t expirationDay       : 18; /** "Expiration day in DPC" */
@@ -478,6 +478,10 @@ typedef struct {
 
 void swizzle8(uint64_t *const _in, const size_t len);
 void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data);
+void print_fileControlPtr(FileControlPointer const*const fcp);
+void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
+                           FileHistoryWord_Data const*const fhw_data);
+void print_blockControlPointer(BlockControlPointer const*const bcp);
 
 int main(int argc, char **argv)
 {
@@ -561,6 +565,7 @@ int main(int argc, char **argv)
 	do {
 		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &fcp, offset%8,
 		                         60, 0, sizeof(FileControlPointer)/8);
+		print_fileControlPtr(&fcp);
 
 		// file history word always follows the FCP?
 		gbytes<uint8_t,uint64_t>(inBuf+((offset+60)/8), (uint64_t*) &fhw_data,
@@ -570,6 +575,9 @@ int main(int argc, char **argv)
 		                        (offset+60)%8, 6, 0,
 		                         sizeof(FileHistoryWord_Text));
 		cdc_decode((char*) &fhw_text, sizeof(FileHistoryWord_Text));
+
+		print_fileHistoryWord(&fhw_text, &fhw_data);
+
 		offset += fcp.nextFCPOff*60;
 	} while (!fcp.isEOF);
 
@@ -671,5 +679,85 @@ data->ctrlCardOpenOff,    5, text->ctrlCardOpenOff,
 data->openMergeAreaOff,   5, text->openMergeAreaOff,
 data->curCtrlCardOpenOff, 5, text->curCtrlCardOpenOff,
 data->fcpToBlkCtrlOff,    5, text->fcpToBlkCtrlOff
+);
+}
+
+void print_fileControlPtr(FileControlPointer const*const fcp)
+{
+printf(
+"=== File Control Pointer ===\n"
+"nextFCPOff        = %ld\n"
+"dataBlkNum        = %ld\n"
+"bufferPtrOffset   = %ld\n"
+"fileType          = %ld (%s)\n"
+"fileDisposition   = %ld (%s)\n"
+"secondaryFileType = %ld (%s)\n"
+"isObsolete        = %ld\n"
+"isEOF             = %ld\n",
+fcp->nextFCPOff,
+fcp->dataBlkNum,
+fcp->bufferPtrOffset,
+fcp->fileType, fileTypes[fcp->fileType].str,
+fcp->fileDisposition, fileDispositions[fcp->fileDisposition].str,
+fcp->secondaryFileType, secondaryFileTypes[fcp->secondaryFileType].str,
+fcp->isObsolete,
+fcp->isEOF
+);
+}
+
+void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
+                           FileHistoryWord_Data const*const fhw_data)
+{
+printf(
+"=== File History Word ===\n"
+"dataSetID      = \"%.*s\"\n"
+"lastReadTime   = %ld\n"
+"lastReadDay    = %ld\n"
+"lastReadYear   = %ld\n"
+"lastWriteTime  = %ld\n"
+"lastWriteDay   = %ld\n"
+"lastWriteYear  = %ld\n"
+"useCount       = %ld (\"%.*s\")\n"
+"versionNum     = \"%.*s\"\n"
+"writePasswd    = \"%.*s\"\n"
+"readPasswd     = \"%.*s\"\n"
+"recordLen      = %ld (\"%.*s\")\n"
+"maxRecordNum   = %ld (\"%.*s\")\n"
+"creationYear   = \"%.*s\"\n"
+"creationDay    = \"%.*s\"\n"
+"expirationYear = \"%.*s\"\n"
+"expirationDay  = \"%.*s\"\n",
+17, fhw_text->dataSetID,
+fhw_data->lastReadTime,
+fhw_data->lastReadDay,
+fhw_data->lastReadYear,
+fhw_data->lastWriteTime,
+fhw_data->lastWriteDay,
+fhw_data->lastWriteYear,
+fhw_data->useCount, 2, fhw_text->useCount,
+2, fhw_text->versionNum,
+5, fhw_text->writePasswd,
+5, fhw_text->readPasswd,
+fhw_data->recordLen, 5, fhw_text->recordLen,
+fhw_data->maxRecordNum, 5, fhw_text->maxRecordNum,
+2, fhw_text->creationYear,
+3, fhw_text->creationDay,
+2, fhw_text->expirationYear,
+3, fhw_text->expirationDay
+);
+}
+
+void print_blockControlPointer(BlockControlPointer const*const bcp)
+{
+printf(
+"=== Block Control Pointer ===\n"
+"wordsToFirstPtr    = %ld\n"
+"lastRecord         = %ld\n"
+"checksum           = %ld\n" 
+"noRecordStartsHere = %ld\n",
+bcp->wordsToFirstPtr,
+bcp->lastRecord,
+bcp->checksum,
+bcp->noRecordStartsHere
 );
 }
