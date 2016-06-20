@@ -3,6 +3,7 @@
  * Author: Nicholas DeCicco <nsd.cicco@gmail.com>
  */
 
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -398,7 +399,8 @@ typedef struct {
 /**
  * Data buffer flags. "Precede each data record."
  *
- * This is the same structure that is described in fcon
+ * This is the same structure that is described in fcon; aka "Record
+ * Control Word."
  */
 typedef struct {
               uint64_t nextPtrOffset              : 21; /** "Words to next buffer pointer" */
@@ -483,6 +485,7 @@ void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
                            FileHistoryWord_Data const*const fhw_data);
 void print_blockControlPointer(BlockControlPointer const*const bcp);
 void print_dataBufferFlags(DataBufferFlags const*const dbf);
+void print_offset(const size_t offset);
 
 int main(int argc, char **argv)
 {
@@ -496,10 +499,13 @@ int main(int argc, char **argv)
 	FileHistoryWord_Data fhw_data;
 	FileHistoryWord_Text fhw_text;
 	FileControlPointer fcp;
-	size_t offset;
-
+	size_t offset, decodeAmount;
 	DataBufferFlags dbf;
-	*((uint64_t*) &dbf) = 0x0000DC13AA00048;
+	char eofStr[] = "EOF1NCARSYSTEMHD";
+	char eofStrLen = strlen(eofStr);
+	uint8_t *eofStart, *decodeBuf;
+	char outFileName[] = "out.gp1";
+	uint8_t tmp[10000];
 
 //	if (argc != 3) {
 	if (argc != 2) {
@@ -582,7 +588,67 @@ int main(int argc, char **argv)
 		offset += fcp.nextFCPOff*60;
 	} while (!fcp.isEOF);
 
-	return 1;
+
+	int numDBF = 0;
+
+	printf("=== After header ===\n");
+	#define DBF_START_BITS 984720
+	offset = DBF_START_BITS;
+	do {
+		numDBF++;
+		print_offset(offset);
+		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &dbf,
+		                         offset%8, 60, 0,
+		                         sizeof(DataBufferFlags)/8);
+		print_dataBufferFlags(&dbf);
+
+		/* Advance to the next pointer. */
+		offset += 60*dbf.nextPtrOffset;
+	} while (!dbf.isEOF);
+
+// Look for the EOF marker
+	decodeAmount = (readAmount*8)/6;
+	if (!(decodeBuf = (uint8_t*) malloc(sizeof(uint8_t)*(decodeAmount + 8*numDBF /* approximate */)))) {
+		return 1;
+	}
+	gbytes<uint8_t,uint8_t>(inBuf, decodeBuf, 0, 6, 0, decodeAmount);
+	cdc_decode((char*) decodeBuf, decodeAmount);
+	if (!(eofStart = (uint8_t*) memmem(decodeBuf, decodeAmount, eofStr, eofStrLen))) {
+		fprintf(stderr, "Failed to locate EOF marker\n");
+		return 1;
+	}
+
+#define DATA_START_BIT_OFFSET (16412*60) /* + 0.5 */
+	readAmount = DIV_CEIL((eofStart-decodeBuf)*6 - DATA_START_BIT_OFFSET - 12 /* 12=2*6; EOF starts slightly sooner */,8);
+	if (!(fp = fopen(outFileName, "w"))) {
+		fprintf(stderr, "failed to open \"%s\" for writing\n", outFileName);
+		return 1;
+	}
+	offset = DATA_START_BIT_OFFSET;
+	size_t writeOffset = 0;
+	memset(decodeBuf, 0, sizeof(uint8_t)*(decodeAmount + 8*numDBF /* approximate */));
+	do {
+		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &dbf,
+		                         offset%8, 60, 0,
+		                         sizeof(DataBufferFlags)/8);
+		offset += 60;
+		gbytes<uint8_t,uint8_t>(inBuf+(offset/8), tmp, offset%8, 8, 0, DIV_CEIL((dbf.nextPtrOffset-1)*60,8));
+		memcpy(decodeBuf+(writeOffset/8), tmp, DIV_CEIL((dbf.nextPtrOffset-1)*60,8));
+		writeOffset += 60*(dbf.nextPtrOffset-1);
+		/* Align writeOffset to 64-bit boundaries */
+		if (!dbf.isEOF && (writeOffset % 64) == 0) {
+			writeOffset += 64;
+		} else {
+			writeOffset = 64*DIV_CEIL(writeOffset,64);
+		}
+		offset += 60*(dbf.nextPtrOffset-1);
+	} while (!dbf.isEOF);
+	fwrite(decodeBuf, sizeof(uint8_t), DIV_CEIL(writeOffset,8), fp);
+	fclose(fp);
+
+	free(inBuf);
+
+	return 0;
 }
 
 void swizzle8(uint64_t *const _in, const size_t len)
@@ -796,4 +862,10 @@ dbf->isEOF,
 dbf->isEOD,
 dbf->isRecordStart
 );
+}
+
+void print_offset(const size_t offset)
+{
+	printf("offset = %d (bits) %d+%d (8-bit bytes) %d+%d (60-bit words)\n",
+	       (int) offset, (int) offset/8, (int) offset%8, (int) offset/60, (int) offset%60);
 }
