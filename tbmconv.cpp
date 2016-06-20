@@ -482,6 +482,7 @@ void print_fileControlPtr(FileControlPointer const*const fcp);
 void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
                            FileHistoryWord_Data const*const fhw_data);
 void print_blockControlPointer(BlockControlPointer const*const bcp);
+void print_dataBufferFlags(DataBufferFlags const*const dbf);
 
 int main(int argc, char **argv)
 {
@@ -759,5 +760,40 @@ bcp->wordsToFirstPtr,
 bcp->lastRecord,
 bcp->checksum,
 bcp->noRecordStartsHere
+);
+}
+
+void print_dataBufferFlags(DataBufferFlags const*const dbf)
+{
+printf(
+"=== Data Buffer Flags ===\n"
+"[raw data]                 = %015lX\n"
+"nextPtrOffset              = %ld\n"
+"prevPtrOffset              = %ld\n"
+"recordDataMode             = %ld (%s)\n"
+"numBits                    = %ld\n"
+"recordIsShorter            = %ld\n"
+"recordNotWritten           = %ld\n"
+"sourceRecordHasParityError = %ld\n"
+"endLabelGroup              = %ld\n"
+"labelRecordFollows         = %ld\n"
+"isLoadPoint                = %ld\n"
+"isEOF                      = %ld\n"
+"isEOD                      = %ld\n"
+"isRecordStart              = %ld\n",
+*((uint64_t*) dbf),
+dbf->nextPtrOffset,
+dbf->prevPtrOffset,
+dbf->recordDataMode, dbf->recordDataMode <= DATA_TYPE_MAX ? dataTypes[dbf->recordDataMode].str : "--",
+dbf->numBits,
+dbf->recordIsShorter,
+dbf->recordNotWritten,
+dbf->sourceRecordHasParityError,
+dbf->endLabelGroup,
+dbf->labelRecordFollows,
+dbf->isLoadPoint,
+dbf->isEOF,
+dbf->isEOD,
+dbf->isRecordStart
 );
 }
