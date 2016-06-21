@@ -478,7 +478,6 @@ typedef struct {
 //                uint64_t 
 } SYSMSI;
 
-void swizzle8(uint64_t *const _in, const size_t len);
 void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data);
 void print_fileControlPtr(FileControlPointer const*const fcp);
 void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
@@ -541,8 +540,6 @@ int main(int argc, char **argv)
 	gbytes<uint8_t,uint8_t>(inBuf, (uint8_t*) &syslbn_text, 0, 6, 0, sizeof(SYSLBN_Text));
 
 	cdc_decode((char*) &syslbn_text, sizeof(SYSLBN_Text));
-
-//	swizzle8((uint64_t*) inBuf, sizeof(SYSLBN_Data)/8);
 
 	gbytes<uint8_t,uint64_t>(inBuf, (uint64_t*) &syslbn_data, 0, 60, 0, sizeof(SYSLBN_Data)/8);
 
@@ -649,19 +646,6 @@ int main(int argc, char **argv)
 	free(inBuf);
 
 	return 0;
-}
-
-void swizzle8(uint64_t *const _in, const size_t len)
-{
-	uint8_t *in = (uint8_t*) _in;
-	uint8_t tmp;
-	size_t i;
-	for (i = 0; i < len; i++) {
-		tmp = in[i*8+0]; in[i*8+0] = in[i*8+7]; in[i*8+7] = tmp;
-		tmp = in[i*8+1]; in[i*8+1] = in[i*8+6]; in[i*8+6] = tmp;
-		tmp = in[i*8+2]; in[i*8+2] = in[i*8+5]; in[i*8+5] = tmp;
-		tmp = in[i*8+3]; in[i*8+3] = in[i*8+4]; in[i*8+4] = tmp;
-	}
 }
 
 void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data)
