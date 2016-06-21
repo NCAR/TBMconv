@@ -490,7 +490,7 @@ int main(int argc, char **argv)
 {
 	FILE *fp;
 	char *inFileName;
-//	char *outFileName;
+	char *outFileName;
 	SYSLBN_Data syslbn_data;
 	SYSLBN_Text syslbn_text;
 	uint8_t *inBuf;
@@ -503,11 +503,9 @@ int main(int argc, char **argv)
 	char eofStr[] = "EOF1NCARSYSTEMHD";
 	char eofStrLen = strlen(eofStr);
 	uint8_t *eofStart, *decodeBuf;
-	char outFileName[] = "out.gp1";
 	uint8_t tmp[10000];
 
-//	if (argc != 3) {
-	if (argc != 2) {
+	if (argc != 3) {
 		fprintf(stderr, "Error: Require exactly two arguments.\n");
 		printf("Usage:\n"
 		       "\n"
@@ -516,7 +514,7 @@ int main(int argc, char **argv)
 	}
 
 	inFileName = argv[1];
-//	outFileName = argv[2];
+	outFileName = argv[2];
 
 	if (!(fp = fopen(inFileName, "r"))) {
 		fprintf(stderr, "Error: Failed to open \"%s\" for reading.\n", inFileName);
