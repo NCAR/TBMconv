@@ -419,12 +419,17 @@ typedef struct {
               uint64_t /* padding */              :  0;
 } DataBufferFlags;
 
-void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data);
-void print_fileControlPtr(FileControlPointer const*const fcp);
+void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data,
+                  const size_t offset);
+void print_fileControlPtr(FileControlPointer const*const fcp,
+                          const size_t offset);
 void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
-                           FileHistoryWord_Data const*const fhw_data);
-void print_blockControlPointer(BlockControlPointer const*const bcp);
-void print_dataBufferFlags(DataBufferFlags const*const dbf);
+                           FileHistoryWord_Data const*const fhw_data,
+                           const size_t offset);
+void print_blockControlPointer(BlockControlPointer const*const bcp,
+                               const size_t offset);
+void print_dataBufferFlags(DataBufferFlags const*const dbf,
+                           const size_t offset);
 void print_offset(const size_t offset);
 
 int main(int argc, char **argv)
@@ -482,7 +487,7 @@ int main(int argc, char **argv)
 
 	gbytes<uint8_t,uint64_t>(inBuf, (uint64_t*) &syslbn_data, 0, 60, 0, sizeof(SYSLBN_Data)/8);
 
-	print_syslbn(&syslbn_text, &syslbn_data);
+	print_syslbn(&syslbn_text, &syslbn_data, 0);
 
 	uint8_t test[5];
 	uint64_t in = syslbn_data.vol1;
@@ -508,7 +513,7 @@ int main(int argc, char **argv)
 	do {
 		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &fcp, offset%8,
 		                         60, 0, sizeof(FileControlPointer)/8);
-		print_fileControlPtr(&fcp);
+		print_fileControlPtr(&fcp, offset);
 
 		// file history word always follows the FCP?
 		gbytes<uint8_t,uint64_t>(inBuf+((offset+60)/8), (uint64_t*) &fhw_data,
@@ -519,7 +524,7 @@ int main(int argc, char **argv)
 		                         sizeof(FileHistoryWord_Text));
 		cdc_decode((char*) &fhw_text, sizeof(FileHistoryWord_Text));
 
-		print_fileHistoryWord(&fhw_text, &fhw_data);
+		print_fileHistoryWord(&fhw_text, &fhw_data, offset+60);
 
 		offset += fcp.nextFCPOff*60;
 	} while (!fcp.isEOF);
@@ -532,11 +537,10 @@ int main(int argc, char **argv)
 	offset = DBF_START_BITS;
 	do {
 		numDBF++;
-		print_offset(offset);
 		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &dbf,
 		                         offset%8, 60, 0,
 		                         sizeof(DataBufferFlags)/8);
-		print_dataBufferFlags(&dbf);
+		print_dataBufferFlags(&dbf, offset);
 
 		/* Advance to the next pointer. */
 		offset += 60*dbf.nextPtrOffset;
@@ -587,10 +591,12 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data)
+void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data,
+                  const size_t offset)
 {
+printf(" ==== SYSLBN ==== \n");
+print_offset(offset);
 printf(
-" ==== SYSLBN ==== \n"
 "machineType        = %7ld (%s)\n"
 "density            = %7ld (%s)\n"
 "dataType           = %7ld (%s)\n"
@@ -672,10 +678,12 @@ data->fcpToBlkCtrlOff,    5, text->fcpToBlkCtrlOff
 );
 }
 
-void print_fileControlPtr(FileControlPointer const*const fcp)
+void print_fileControlPtr(FileControlPointer const*const fcp,
+                          const size_t offset)
 {
+printf("=== File Control Pointer ===\n");
+print_offset(offset);
 printf(
-"=== File Control Pointer ===\n"
 "nextFCPOff        = %ld\n"
 "dataBlkNum        = %ld\n"
 "bufferPtrOffset   = %ld\n"
@@ -696,10 +704,12 @@ fcp->isEOF
 }
 
 void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
-                           FileHistoryWord_Data const*const fhw_data)
+                           FileHistoryWord_Data const*const fhw_data,
+                           const size_t offset)
 {
+printf("=== File History Word ===\n");
+print_offset(offset);
 printf(
-"=== File History Word ===\n"
 "dataSetID      = \"%.*s\"\n"
 "lastReadTime   = %ld\n"
 "lastReadDay    = %ld\n"
@@ -737,10 +747,11 @@ fhw_data->maxRecordNum, 5, fhw_text->maxRecordNum,
 );
 }
 
-void print_blockControlPointer(BlockControlPointer const*const bcp)
+void print_blockControlPointer(BlockControlPointer const*const bcp, const size_t offset)
 {
+printf("=== Block Control Pointer ===\n");
+print_offset(offset);
 printf(
-"=== Block Control Pointer ===\n"
 "wordsToFirstPtr    = %ld\n"
 "lastRecord         = %ld\n"
 "checksum           = %ld\n" 
@@ -752,10 +763,11 @@ bcp->noRecordStartsHere
 );
 }
 
-void print_dataBufferFlags(DataBufferFlags const*const dbf)
+void print_dataBufferFlags(DataBufferFlags const*const dbf, const size_t offset)
 {
+printf("=== Data Buffer Flags ===\n");
+print_offset(offset);
 printf(
-"=== Data Buffer Flags ===\n"
 "[raw data]                 = %015lX\n"
 "nextPtrOffset              = %ld\n"
 "prevPtrOffset              = %ld\n"
