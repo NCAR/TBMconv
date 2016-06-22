@@ -419,65 +419,6 @@ typedef struct {
               uint64_t /* padding */              :  0;
 } DataBufferFlags;
 
-typedef struct {
-/* Word DB20:   "Stack Entry for Current Call" */
-                uint64_t busyTablePtr             :  6; /** "Busy Table Pointer" (BTP) */
-                uint64_t callingSequencePtr       : 21; /** "Calling Sequence for CM" (text) / "Ptr to Calling Sequence" (figure) */
-                uint64_t entryLoc                 :  6; /** "Pointer Position" */
-                uint64_t nextPtr                  :  6; /** "Next Pointer" */
-                uint64_t prevPtr                  :  6; /** "Previous Pointer" */
-                uint64_t controlPoint             : 12; /** "Control Point" */
-                uint64_t /* "open" */             :  1;
-                uint64_t wait                     :  1; /** "Wait Flag" */
-                uint64_t isDispatched             :  1; /** "Dispatched Flag" */
-                uint64_t /* padding */            :  0;
-
-/* Word DB21+0: "Calling Sequence for Current Call" */
-                uint64_t count                    : 18; /** "Count" ("CNT") */
-                uint64_t /* open */               : 12;
-                uint64_t opCode                   : 11; /** "Op Code" */
-                uint64_t /* padding */            :  0;
-
-/* Word DB21+1: "Calling Sequence for Current Call" (continued) */
-                uint64_t statusCellPtr            : 18; /** Pointer to Status Cell" */
-                uint64_t /* "open" */             : 12;
-                uint64_t logicalUnitNumCellPtr    : 18; /** "Pointer To Cell Containing LUN" */
-                uint64_t logicalUnitNum           : 12; /** "Logcal Unit Number" */
-                uint64_t /* padding */            :  0;
-
-/* Word DB21+2: "Calling Sequence for Current Call" (continued) */
-                uint64_t lwaPlusOne               : 21; /** "LWA+1" */
-                uint64_t /* open */               :  9;
-                uint64_t fwa                      : 21; /** "FWA" */
-                uint64_t /* open */               :  9;
-                uint64_t /* padding */            :  0;
-
-/* Word DB21+3: "Calling Sequence for Current Call" (continued) */
-                uint64_t unitCellContents         : 60; /** "Contents of Unit Cell from IOC call */
-                uint64_t /* padding */            :  0;
-
-/* Word DB22:   "I/O Activity Flag" */
-                uint64_t ioActivityFlag           : 60; /** "If nonzero call has been sent to DDC for this logical unit;
-                                                             if disk is busy for this unit, bit 0 set */
-                uint64_t /* padding */            :  0;
-
-/* Word DB23:   "SYSMSI Length" */
-                uint64_t sysmsiLen                : 21; /** Length of SYSMSI */
-                uint64_t /* open */               :  9;
-                uint64_t syslbiLen                : 22; /** Length of SYSLBI */
-                uint64_t /* open */               :  8;
-                uint64_t /* padding */            :  0;
-
-/* Word DB24+0: (no description) */
-                uint64_t tlibCatCWEntryLoc        : 19; /** "Location of TLIB Catalog CW Entry" */
-                uint64_t /* open */               :  5;
-                uint64_t volumeSerialNum          : 36; /** "VSN if tape" */
-                uint64_t /* padding */            :  0;
-
-/* Word DB24+1: (no description) */
-//                uint64_t 
-} SYSMSI;
-
 void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data);
 void print_fileControlPtr(FileControlPointer const*const fcp);
 void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
