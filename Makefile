@@ -9,7 +9,7 @@ CXXFLAGS = -g -Wall -pedantic
 F77_TARGETS = tbm2cos
 CXX_TARGETS = tbmconv bk
 
-CXX_OBJS = cdc.o
+CXX_OBJS = cdc.o tbm.o
 
 #TARGETS = $(F77_TARGETS)
 TARGETS = $(CXX_TARGETS)
