@@ -7,7 +7,7 @@ CXX = g++
 CXXFLAGS = -g -Wall -pedantic
 
 F77_TARGETS = tbm2cos
-CXX_TARGETS = tbmconv bk
+CXX_TARGETS = tbmconv bk tbmexplore
 
 CXX_OBJS = cdc.o tbm.o
 
