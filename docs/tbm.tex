@@ -19,6 +19,8 @@
 %\renewcommand*\sfdefault{\sfdefault}
 \renewcommand*\familydefault{\sfdefault}
 
+\newcommand{\rotate}[1]{\tikz{\node[rotate=90]{\textsf{#1}};}}
+
 \newcommand{\controlword}[1]{
 {\scriptsize
 %\sfdefault
@@ -58,7 +60,7 @@ Length & \multicolumn{1}{l}{Bits} & Type & API & Description \\
 \maketitle
 
 \controlword{
-\tikz{\node[rotate=90]{Record start flag};} &
+\rotate{Record start flag} &
 \multicolumn{2}{c}{} &
 \multicolumn{12}{|c|}{Checksum} &
 \multicolumn{21}{c|}{Last Record} &
@@ -91,7 +93,7 @@ A SYSLBN block appears at the start of every TBM file, at offset 0. The SYSLBN b
 \subsection{SYSLBN Word 0}
 
 \controlword{
-\multicolumn{4}{|c|}{\tikz{\node[rotate=90]{\shortstack[c]{Machine\\Type}};}} &
+\multicolumn{4}{|c|}{\rotate{\shortstack[c]{Machine\\Type}}} &
 \multicolumn{4}{c|}{Density} &
 \multicolumn{8}{c|}{Data Type} &
 \multicolumn{4}{c|}{Tracks} &
@@ -670,11 +672,11 @@ These words contain the HDR2 label.
 \section{File Control Pointers} \label{Sec.FileControlPointer}
 
 \controlword{
-\tikz{\node[rotate=90]{Is EOF};} &
-\tikz{\node[rotate=90]{Is Obsolete};} &
-\multicolumn{3}{c|}{\tikz{\node[rotate=90]{\shortstack[c]{Secondary\\file type}};}} &
-\multicolumn{3}{c|}{\tikz{\node[rotate=90]{Disposition};}} &
-\multicolumn{3}{c|}{\tikz{\node[rotate=90]{File type};}} &
+\rotate{Is EOF} &
+\rotate{Is Obsolete} &
+\multicolumn{3}{c|}{\rotate{\shortstack[c]{Secondary\\file type}}} &
+\multicolumn{3}{c|}{\rotate{Disposition}} &
+\multicolumn{3}{c|}{\rotate{File type}} &
 \multicolumn{4}{c|}{Open} &
 \multicolumn{21}{c|}{\shortstack[c]{Location of Pointer\\Preceding HDR1 label\\in Data Buffer}} &
 \multicolumn{12}{c|}{\shortstack[c]{Block num.\\where file\\starts}} &
@@ -896,7 +898,7 @@ The file histoy words immediately follow every file control pointer.
 \subsection{BCP Word 9}
 
 \controlword{
-\tikz{\node [rotate=90] {No Rec. Start};} &
+\rotate{No Rec. Start} &
 \multicolumn{14}{c|}{Open} &
 \multicolumn{21}{c|}{Last record in data block N} &
 \multicolumn{24}{c|}{Words to first pointer in data block N}
@@ -916,7 +918,7 @@ The file histoy words immediately follow every file control pointer.
 \subsection{BCP Word \(+9+M-1\)}
 
 \controlword{
-\tikz{\node [rotate=90] {No Rec. Start};} &
+\rotate{No Rec. Start} &
 \multicolumn{14}{c|}{Open} &
 \multicolumn{21}{c|}{Last Record in Data Block M} &
 \multicolumn{24}{c|}{Words to First Pointer in Block M}
@@ -951,20 +953,20 @@ The file histoy words immediately follow every file control pointer.
 %                                                                                     %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Data Buffer Flags}
+\section{Data Buffer Flags} \label{Sec.DataBufferFlag}
 
 Also known as the ``record control word" and the ``"
 
 \controlword{
-\tikz{\node[rotate=90]{Record start};} &
-\tikz{\node[rotate=90]{EOD};} &
-\tikz{\node[rotate=90]{EOF};} &
-\tikz{\node[rotate=90]{Load point};} &
-\tikz{\node[rotate=90]{Label rec. follows};} &
-\tikz{\node[rotate=90]{EOL};} &
-\tikz{\node[rotate=90]{Parity error};} &
-\tikz{\node[rotate=90]{Rec. not written};} &
-\tikz{\node[rotate=90]{Rec. short};} &
+\rotate{Record start} &
+\rotate{EOD} &
+\rotate{EOF} &
+\rotate{Load point} &
+\rotate{Label rec. follows} &
+\rotate{EOL} &
+\rotate{Parity error} &
+\rotate{Rec. not written} &
+\rotate{Rec. short} &
 \multicolumn{6}{c|}{\shortstack[c]{No. bits.\\in last\\ dataword}} &
 \multicolumn{5}{c|}{\shortstack[c]{Mode\\of\\data}} &
 \multicolumn{19}{c|}{Words to previous pointer} &
