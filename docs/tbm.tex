@@ -38,16 +38,6 @@
 
 \newcommand{\controlworddesc}[1]{
 \begin{center}
-\begin{tabular}[t]{rrl}
-Length & \multicolumn{1}{l}{Bits} & Description \\
-\midrule
-#1
-\end{tabular}
-\end{center}
-}
-
-\newcommand{\controlworddescb}[1]{
-\begin{center}
 \begin{tabular}[t]{rrp{8.0cm}}
 Length & \multicolumn{1}{l}{Bits} & Description \\
 \midrule
@@ -211,7 +201,7 @@ This word is unused and should be set to zero.
 \multicolumn{6}{c|}{\(\text{VSN}_{6}\)}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 24 & 59--36 & VOL1 characters for a Volume One label and the start of the Volume One label \\
 36 & 35-0 & Six Volume Serial Name (VSN) characters
@@ -235,7 +225,7 @@ This word is unused and should be set to zero.
 \multicolumn{6}{c|}{--}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 6 & 59--54 & Volume One label accessability criteria (see \cref{Sec.AccessibilityCriteria}) \\
 54 & 53-0 & Blank fill characters
@@ -259,7 +249,7 @@ This word is unused and should be set to zero.
 \multicolumn{6}{c|}{--}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 60 & 59--0 & Blank fill characters \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -282,7 +272,7 @@ This word is unused and should be set to zero.
 \multicolumn{6}{c|}{\(\text{ACNT}_3\)}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 42 & 59--18 & Blank fill characters \\
 18 & 17--0  & Characters 1--3 of the *JOB card accounting number \\
@@ -306,7 +296,7 @@ This word is unused and should be set to zero.
 \multicolumn{6}{c|}{--}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 30 & 59--30 & Characters 4--8 of the *JOB card accounting number \\
 12 & 29--18 & The scientist number from the *JOB card \\
@@ -331,7 +321,7 @@ This word is unused and should be set to zero.
 \multicolumn{6}{c|}{--}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 60 & 59--0 & Blank fill characters \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -354,7 +344,7 @@ This word is unused and should be set to zero.
 \multicolumn{6}{c|}{--}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 60 & 59--0 & Blank fill characters \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -378,7 +368,7 @@ This word is unused and should be set to zero.
 \multicolumn{6}{c|}{L}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 36 & 59--24 & TBM Volume Serial Name \\
 18 & 23--6 & Blank fill characters \\
@@ -405,7 +395,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{6}\)\\ Y}}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 24 & 59--36 & HDR1 characters for a Header One label and the start of the first Header One label \\
 36 & 35--0  & Data Set Identifier (DSI) characters 1--6
@@ -429,7 +419,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{16}\)\\ 0}}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 60 & 59--0 & Data Set Identifier (DSI) characters 7--16 \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -452,7 +442,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\(\text{FSN}_{3}\)}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  6 & 59--54 & \\
 36 & 54--18 & Volume Serial Name characters 1--6, equal to the ones in word 4, bits 59--36 \\
@@ -477,7 +467,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\(\text{VN}_{1}\)}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  6 & 59--54 & File section number character 4 \\
 24 & 53--30 & File sequence number characters 1--4 \\
@@ -503,7 +493,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\(\text{ED}_{3}\)}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  6 & 59--54 & Version number character 2 \\
 36 & 53--18 & Creation date characters 1--6 \\
@@ -528,7 +518,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\(\text{BC}_{6}\)}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 18 & 59--42 & Expiration date characters 4--6 \\
  6 & 41--36 & the HDR1 accessability criteria character (see \cref{Sec.AccessibilityCriteria}) \\
@@ -553,7 +543,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\(\text{SC}_{10}\)}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 60 & 59--42 & System code characters 1--10
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -576,7 +566,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{--}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 18 & 59--42 & System code characters 11--13 \\
 42 & 41--0  & Spaces \\
@@ -611,7 +601,7 @@ These words contain the HDR2 label.
 \multicolumn{30}{c|}{Offset to current BCP}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 30 & 59--30 & Offset to current file control pointer \\
 30 & 29--0  & Offset to current block control pointer from SYSMSI \\
@@ -627,7 +617,7 @@ These words contain the HDR2 label.
 \multicolumn{30}{c|}{Offset to control card ``open" area}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 30 & 59--30 & Offset to first file control pointer \\
 30 & 29--0  & Offset to control card ``open" area \\
@@ -643,7 +633,7 @@ These words contain the HDR2 label.
 \multicolumn{30}{c|}{Offset to current open control card area}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 30 & 59--30 & Offset to ``open" merge area \\
 30 & 29--0  & Offset to current open control card area \\
@@ -659,7 +649,7 @@ These words contain the HDR2 label.
 \multicolumn{30}{c|}{Offset from FCP to first BCP}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 30 & 59--30 & Unused \\
 30 & 29--0  & Offset from File Control Pointer to first Block Control Pointer \\
@@ -745,7 +735,7 @@ The file histoy words immediately follow every file control pointer.
 \multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{10}\)\\ M}}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 60 & 59--0 & Characters 1--10 of the Data Set Identifier (DSI) from the current HDR1 label \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -768,7 +758,7 @@ The file histoy words immediately follow every file control pointer.
 \multicolumn{6}{c|}{--}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 42 & 59--24 & Characters 11--17 of the Data Set Identifier (DSI) from the current HDR1 label \\
 18 & 17--0  & Spaces \\
@@ -788,7 +778,7 @@ The file histoy words immediately follow every file control pointer.
 \multicolumn{6}{c|}{\shortstack[c]{Last year\\file written}}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 15 & 59--45 & Last time the file was read \\
  9 & 44--36 & Last day of year file was read \\
@@ -809,7 +799,7 @@ The file histoy words immediately follow every file control pointer.
 \multicolumn{12}{c|}{Version/generation number}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 36 & 59--24 & Open \\
 12 & 23--12 & Use count; i.e., the number of times the file was referenced. Needed for PLIB. \\
@@ -826,7 +816,7 @@ The file histoy words immediately follow every file control pointer.
 \multicolumn{30}{c|}{Password for writing}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 30 & 59--30 & Password for reading \\
 30 & 29--0  & Password for writing \\
@@ -842,7 +832,7 @@ The file histoy words immediately follow every file control pointer.
 \multicolumn{30}{c|}{Maximum Record Number}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 30 & 59--30 & Record length \\
 30 & 29--0  & Maximum record number \\
@@ -860,7 +850,7 @@ The file histoy words immediately follow every file control pointer.
 \multicolumn{18}{c|}{Expiration day in DPC}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 12 & 59--48 & Creation year in DPC \\
 18 & 47--30 & Creation day in DPC \\
@@ -877,7 +867,7 @@ The file histoy words immediately follow every file control pointer.
 \multicolumn{60}{|c|}{Open}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 60 & 59--0 & Open \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -902,7 +892,7 @@ The file histoy words immediately follow every file control pointer.
 \multicolumn{24}{c|}{Words to first pointer in data block N}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  1 & 59     & If set, no record starts in this block. \\
 14 & 58--45 & Open \\
@@ -922,7 +912,7 @@ The file histoy words immediately follow every file control pointer.
 \multicolumn{24}{c|}{Words to First Pointer in Block M}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  1 & 59     & If set, no record starts in this block. \\
 14 & 58--45 & Open \\
@@ -939,7 +929,7 @@ The file histoy words immediately follow every file control pointer.
 \multicolumn{60}{|c|}{Repeat of File Control Word +28}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 60 & 59--0 & Next file control pointer \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -971,7 +961,7 @@ Also known as the ``record control word" and the ``"
 \multicolumn{21}{c|}{Words to next pointer}
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 1 & 59 & Start of record \\
 1 & 58 & End of data in this volume \\
@@ -1009,7 +999,7 @@ Note that characters 5--54 and 61--80 of EOF1 are the same as those of HDR1.
 \multicolumn{6}{c|}{1} &
 }
 
-\controlworddescb{
+\controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 18 & 59-42 & \\
  6 & 41-46 & \\
