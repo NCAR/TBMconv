@@ -1,0 +1,1020 @@
+\documentclass{report}
+\usepackage{amsmath}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{array} % for the 'm' table column specifier
+\usepackage{multicol}
+\usepackage{tikz}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+%\usepackage{PTSansNarrow}
+\usepackage[T1]{fontenc}
+
+\newcolumntype{C}[1]{>{\fontfamily{phv}\fontseries{mc}\selectfont\centering\let\newline\\\arraybackslash\hspace{0pt}}m{6.5pt}|}
+
+%\renewcommand*\sfdefault{\sfdefault}
+\renewcommand*\familydefault{\sfdefault}
+
+\newcommand{\controlword}[1]{
+{\scriptsize
+%\sfdefault
+\setlength{\tabcolsep}{0.7pt}
+\begin{center}
+\begin{tabular}{|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|}
+\hline
+59 & 58 & 57 & 56 & 55 & 54 & 53 & 52 & 51 & 50 &
+49 & 48 & 47 & 46 & 45 & 44 & 43 & 42 & 41 & 40 &
+39 & 38 & 37 & 36 & 35 & 34 & 33 & 32 & 31 & 30 &
+29 & 28 & 27 & 26 & 25 & 24 & 23 & 22 & 21 & 20 &
+19 & 18 & 17 & 16 & 15 & 11 & 13 & 12 & 11 & 10 &
+ 9 &  8 &  7 &  6 &  5 &  4 &  3 &  2 &  1 &  0 \\
+#1 \\
+& & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & \\
+\hline
+\end{tabular}
+\end{center}}
+}
+
+\newcommand{\controlworddesc}[1]{
+\begin{center}
+\begin{tabular}[t]{rrl}
+Length & \multicolumn{1}{l}{Bits} & Description \\
+\midrule
+#1
+\end{tabular}
+\end{center}
+}
+
+\newcommand{\controlworddescb}[1]{
+\begin{center}
+\begin{tabular}[t]{rrp{8.0cm}}
+Length & \multicolumn{1}{l}{Bits} & Description \\
+\midrule
+#1
+\end{tabular}
+\end{center}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\title{TBM Format}
+\author{Nicholas DeCicco}
+\maketitle
+
+\controlword{
+\tikz{\node[rotate=90]{Record start flag};} &
+\multicolumn{2}{c}{} &
+\multicolumn{12}{|c|}{Checksum} &
+\multicolumn{21}{c|}{Last Record} &
+\multicolumn{24}{c|}{Start Word Number}
+}
+
+\chapter{}
+
+
+Bits 59--30 of word~29 (``offset to first file control pointer") of the SYSLBN block (which begins at offset 0) specify the offset, in 60-bit words, from the start of the file (offset 0) to the first file control pointer (see \cref{Sec.FileControlPointer}). Each file control pointer is followed by a set of file history words (see \cref{Sec.FileHistoryWords}).
+
+\chapter{Reference}
+
+\section{Accessability critera} \label{Sec.AccessibilityCriteria}
+
+The accessability critera characters are a character which indicate ``any restrictions on who may have access to the information in this file. A space means unlimited access; any other character means special handling, in a manner to be defined."
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                                     %
+%                                        SYSLBN                                       %
+%                                                                                     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{SYSLBN}
+
+A SYSLBN block appears at the start of every TBM file, at offset 0. The SYSLBN block could be thought of as being comprised of a header (words 0 through 3), a VOL1 label (words 4--11), a HDR1 label (words 12--19), a HDR2 label (words 27--28), and finally pointers to various locations in the file (words 28--30).
+
+%%%%%%%%%%%%%%%%% WORD 0 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 0}
+
+\controlword{
+\multicolumn{4}{|c|}{\tikz{\node[rotate=90]{\shortstack[c]{Machine\\Type}};}} &
+\multicolumn{4}{c|}{Density} &
+\multicolumn{8}{c|}{Data Type} &
+\multicolumn{4}{c|}{Tracks} &
+\multicolumn{8}{c|}{BK} &
+\multicolumn{12}{c|}{\shortstack[l]{Number of data\\blocks each\\\(\text{BK} \times 2048\) words}} &
+\multicolumn{20}{c|}{\shortstack[l]{Actual length of\\label buffer}}
+}
+
+\controlworddesc{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+4 & 59--56 &
+\begin{tabular}[t]{rl}
+\multicolumn{2}{@{}l}{The machine type.} \\
+0 & 7600 \\
+1 & Cray-1 \\
+2 & Front end
+\end{tabular} \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+4 & 55--52 &
+\begin{tabular}[t]{rl}
+\multicolumn{2}{@{}l}{The original density.} \\
+0 & 200 bpi \\
+1 & 556 bpi \\
+2 & 800 bpi \\
+3 & 1600 bpi
+\end{tabular} \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+8 & 51--44 &
+\begin{tabular}[t]{rl}
+\multicolumn{2}{@{}l}{The data type.} \\
+0 & BCD as DPC \\
+1 & Binary bit-serial \\
+2 & BCD, no conversion from 7-channel stage-in \\
+3 & ASCII \\
+4 & EBCDIC
+\end{tabular} \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+4 & 43--40 &
+\begin{tabular}[t]{rl}
+\multicolumn{2}{@{}l}{The original number of tape tracks} \\
+0 & 7-track \\
+1 & 9-track
+\end{tabular} \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 8 & 39--32 & The value of BK from a TLIB card on the 7600 \\
+12 & 31--20 & The number of BK length Data Blocks in this volume \\
+20 & 19--0  & Actual length of the label (SYSLBN) buffer
+}
+
+%%%%%%%%%%%%%%%%% WORD 1 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 1}
+
+\controlword{
+\multicolumn{60}{|c|}{Reserved}
+}
+
+\controlworddesc{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+60 & 59--0 & Reserved \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 2 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 2}
+
+This word is unused and should be set to zero.
+
+\controlword{
+\multicolumn{60}{|c|}{Open}
+}
+
+\controlworddesc{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+60 & 59--0 & Open \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 3 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 3}
+
+This word is unused and should be set to zero.
+
+\controlword{
+\multicolumn{60}{|c|}{Open}
+}
+
+\controlworddesc{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+60 & 59--0 & Open \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 4 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 4 (VOL1 Word 0)}
+
+\controlword{
+\multicolumn{6}{|c|}{V} &
+\multicolumn{6}{c|}{O} &
+\multicolumn{6}{c|}{L} &
+\multicolumn{6}{c|}{1} &
+\multicolumn{6}{c|}{\(\text{VSN}_{1}\)} &
+\multicolumn{6}{c|}{\(\text{VSN}_{2}\)} &
+\multicolumn{6}{c|}{\(\text{VSN}_{3}\)} &
+\multicolumn{6}{c|}{\(\text{VSN}_{4}\)} &
+\multicolumn{6}{c|}{\(\text{VSN}_{5}\)} &
+\multicolumn{6}{c|}{\(\text{VSN}_{6}\)}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+24 & 59--36 & VOL1 characters for a Volume One label and the start of the Volume One label \\
+36 & 35-0 & Six Volume Serial Name (VSN) characters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 5 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 5 (VOL1 Word 1)}
+
+\controlword{
+\multicolumn{6}{|c|}{ACC} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+6 & 59--54 & Volume One label accessability criteria (see \cref{Sec.AccessibilityCriteria}) \\
+54 & 53-0 & Blank fill characters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 6 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 6 (VOL1 Word 2)}
+
+\controlword{
+\multicolumn{6}{|c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+60 & 59--0 & Blank fill characters \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 7 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 7 (VOL1 Word 3)}
+
+\controlword{
+\multicolumn{6}{|c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{\(\text{ACNT}_1\)} &
+\multicolumn{6}{c|}{\(\text{ACNT}_2\)} &
+\multicolumn{6}{c|}{\(\text{ACNT}_3\)}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+42 & 59--18 & Blank fill characters \\
+18 & 17--0  & Characters 1--3 of the *JOB card accounting number \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 8 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 8 (VOL1 Word 4)}
+
+\controlword{
+\multicolumn{6}{|c|}{\(\text{ACNT}_4\)} &
+\multicolumn{6}{c|}{\(\text{ACNT}_5\)} &
+\multicolumn{6}{c|}{\(\text{ACNT}_6\)} &
+\multicolumn{6}{c|}{\(\text{ACNT}_7\)} &
+\multicolumn{6}{c|}{\(\text{ACNT}_8\)} &
+\multicolumn{6}{c|}{\(\text{SCI}_{1\text{--}2}\)} &
+\multicolumn{6}{c|}{\(\text{SCI}_{3\text{--}4}\)} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+30 & 59--30 & Characters 4--8 of the *JOB card accounting number \\
+12 & 29--18 & The scientist number from the *JOB card \\
+18 & 17--0  & Blank fill characters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 9 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 9 (VOL1 Word 5)}
+
+\controlword{
+\multicolumn{6}{|c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+60 & 59--0 & Blank fill characters \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 10 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 10 (VOL1 Word 6)}
+
+\controlword{
+\multicolumn{6}{|c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+60 & 59--0 & Blank fill characters \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+
+%%%%%%%%%%%%%%%%% WORD 11 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 11 (VOL1 Word 7)}
+
+\controlword{
+\multicolumn{6}{|c|}{MVM} &
+\multicolumn{6}{c|}{MVM} &
+\multicolumn{6}{c|}{MVM} &
+\multicolumn{6}{c|}{MVM} &
+\multicolumn{6}{c|}{MVM} &
+\multicolumn{6}{c|}{MVM} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{L}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+36 & 59--24 & TBM Volume Serial Name \\
+18 & 23--6 & Blank fill characters \\
+ 6 & 5--0 & System level code
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 12 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 12 (HDR1 Word 0)}
+
+This word marks the beginning of the ``header one label," which is 80 6-bit characters long.
+
+\controlword{
+\multicolumn{6}{|c|}{H} &
+\multicolumn{6}{c|}{D} &
+\multicolumn{6}{c|}{R} &
+\multicolumn{6}{c|}{1} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{1}\)\\ N}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{2}\)\\ C}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{3}\)\\ A}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{4}\)\\ R}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{5}\)\\ S}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{6}\)\\ Y}}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+24 & 59--36 & HDR1 characters for a Header One label and the start of the first Header One label \\
+36 & 35--0  & Data Set Identifier (DSI) characters 1--6
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 13 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 13 (HDR1 Word 1)}
+
+\controlword{
+\multicolumn{6}{|c|}{\shortstack[c]{\(\text{ID}_{7}\)\\ S}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{8}\)\\ T}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{9}\)\\ E}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{10}\)\\ M}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{11}\)\\ H}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{12}\)\\ D}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{13}\)\\ 1}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{14}\)\\ 0}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{15}\)\\ 0}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{16}\)\\ 0}}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+60 & 59--0 & Data Set Identifier (DSI) characters 7--16 \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 14 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 14 (HDR1 Word 2)}
+
+\controlword{
+\multicolumn{6}{|c|}{\shortstack[c]{\(\text{ID}_{17}\)\\ 1}} &
+\multicolumn{6}{c|}{\(\text{VSN}_{1}\)} &
+\multicolumn{6}{c|}{\(\text{VSN}_{2}\)} &
+\multicolumn{6}{c|}{\(\text{VSN}_{3}\)} &
+\multicolumn{6}{c|}{\(\text{VSN}_{4}\)} &
+\multicolumn{6}{c|}{\(\text{VSN}_{5}\)} &
+\multicolumn{6}{c|}{\(\text{VSN}_{6}\)} &
+\multicolumn{6}{c|}{\(\text{FSN}_{1}\)} &
+\multicolumn{6}{c|}{\(\text{FSN}_{2}\)} &
+\multicolumn{6}{c|}{\(\text{FSN}_{3}\)}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 6 & 59--54 & \\
+36 & 54--18 & Volume Serial Name characters 1--6, equal to the ones in word 4, bits 59--36 \\
+18 & 17--0 & File section number characters 1--3
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 15 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 15 (HDR1 Word 3)}
+
+\controlword{
+\multicolumn{6}{|c|}{\(\text{FSN}_{4}\)} &
+\multicolumn{6}{c|}{\(\text{FQN}_{1}\)} &
+\multicolumn{6}{c|}{\(\text{FQN}_{2}\)} &
+\multicolumn{6}{c|}{\(\text{FQN}_{3}\)} &
+\multicolumn{6}{c|}{\(\text{FQN}_{4}\)} &
+\multicolumn{6}{c|}{\(\text{VSN}_{1}\)} &
+\multicolumn{6}{c|}{\(\text{FSN}_{2}\)} &
+\multicolumn{6}{c|}{\(\text{FSN}_{3}\)} &
+\multicolumn{6}{c|}{\(\text{FSN}_{4}\)} &
+\multicolumn{6}{c|}{\(\text{VN}_{1}\)}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 6 & 59--54 & File section number character 4 \\
+24 & 53--30 & File sequence number characters 1--4 \\
+24 & 29--6  & Generation number characters 1--4 \\
+ 6 &  5--0  & Version number character 1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 16 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 16 (HDR1 Word 4)}
+
+\controlword{
+\multicolumn{6}{|c|}{\(\text{VN}_{2}\)} &
+\multicolumn{6}{c|}{\(\text{CD}_{1}\)} &
+\multicolumn{6}{c|}{\(\text{CD}_{2}\)} &
+\multicolumn{6}{c|}{\(\text{CD}_{3}\)} &
+\multicolumn{6}{c|}{\(\text{CD}_{4}\)} &
+\multicolumn{6}{c|}{\(\text{CD}_{5}\)} &
+\multicolumn{6}{c|}{\(\text{CD}_{6}\)} &
+\multicolumn{6}{c|}{\(\text{ED}_{1}\)} &
+\multicolumn{6}{c|}{\(\text{ED}_{2}\)} &
+\multicolumn{6}{c|}{\(\text{ED}_{3}\)}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 6 & 59--54 & Version number character 2 \\
+36 & 53--18 & Creation date characters 1--6 \\
+18 & 17--0  & Expiration date characters 1--3
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 17 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 17 (HDR1 Word 5)}
+
+\controlword{
+\multicolumn{6}{|c|}{\(\text{ED}_{4}\)} &
+\multicolumn{6}{c|}{\(\text{ED}_{5}\)} &
+\multicolumn{6}{c|}{\(\text{ED}_{6}\)} &
+\multicolumn{6}{c|}{ACC} &
+\multicolumn{6}{c|}{\(\text{BC}_{1}\)} &
+\multicolumn{6}{c|}{\(\text{BC}_{2}\)} &
+\multicolumn{6}{c|}{\(\text{BC}_{3}\)} &
+\multicolumn{6}{c|}{\(\text{BC}_{4}\)} &
+\multicolumn{6}{c|}{\(\text{BC}_{5}\)} &
+\multicolumn{6}{c|}{\(\text{BC}_{6}\)}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+18 & 59--42 & Expiration date characters 4--6 \\
+ 6 & 41--36 & the HDR1 accessability criteria character (see \cref{Sec.AccessibilityCriteria}) \\
+36 & 35--0  & The block count characters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 18 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 18 (HDR1 Word 6)}
+
+\controlword{
+\multicolumn{6}{|c|}{\(\text{SC}_{1}\)} &
+\multicolumn{6}{c|}{\(\text{SC}_{2}\)} &
+\multicolumn{6}{c|}{\(\text{SC}_{3}\)} &
+\multicolumn{6}{c|}{\(\text{SC}_{4}\)} &
+\multicolumn{6}{c|}{\(\text{SC}_{5}\)} &
+\multicolumn{6}{c|}{\(\text{SC}_{6}\)} &
+\multicolumn{6}{c|}{\(\text{SC}_{7}\)} &
+\multicolumn{6}{c|}{\(\text{SC}_{8}\)} &
+\multicolumn{6}{c|}{\(\text{SC}_{9}\)} &
+\multicolumn{6}{c|}{\(\text{SC}_{10}\)}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+60 & 59--42 & System code characters 1--10
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 19 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 19 (HDR1 Word 7)}
+
+\controlword{
+\multicolumn{6}{|c|}{\(\text{SC}_{11}\)} &
+\multicolumn{6}{c|}{\(\text{SC}_{12}\)} &
+\multicolumn{6}{c|}{\(\text{SC}_{13}\)} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+18 & 59--42 & System code characters 11--13 \\
+42 & 41--0  & Spaces \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%% WORD 20-27  (0-based indices) %%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Words 20--27 (HDR2 Words 0--7)}
+
+These words contain the HDR2 label.
+
+\controlword{
+\multicolumn{6}{|c|}{H} &
+\multicolumn{6}{c|}{D} &
+\multicolumn{6}{c|}{R} &
+\multicolumn{6}{c|}{2} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--}
+}
+
+%%%%%%%%%%%%%%%%% WORD 28 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 28}
+
+\controlword{
+\multicolumn{30}{|c|}{Offset to current FCP} &
+\multicolumn{30}{c|}{Offset to current BCP}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+30 & 59--30 & Offset to current file control pointer \\
+30 & 29--0  & Offset to current block control pointer from SYSMSI \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 29 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 29}
+
+\controlword{
+\multicolumn{30}{|c|}{Offset to first file control pointer} &
+\multicolumn{30}{c|}{Offset to control card ``open" area}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+30 & 59--30 & Offset to first file control pointer \\
+30 & 29--0  & Offset to control card ``open" area \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 30 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 30}
+
+\controlword{
+\multicolumn{30}{|c|}{Offset to ``open" merge area} &
+\multicolumn{30}{c|}{Offset to current open control card area}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+30 & 59--30 & Offset to ``open" merge area \\
+30 & 29--0  & Offset to current open control card area \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 31 (0-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{SYSLBN Word 31}
+
+\controlword{
+\multicolumn{30}{|c|}{Unused} &
+\multicolumn{30}{c|}{Offset from FCP to first BCP}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+30 & 59--30 & Unused \\
+30 & 29--0  & Offset from File Control Pointer to first Block Control Pointer \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                                     %
+%                                FILE CONTROL POINTERS                                %
+%                                                                                     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{File Control Pointers} \label{Sec.FileControlPointer}
+
+\controlword{
+\tikz{\node[rotate=90]{Is EOF};} &
+\tikz{\node[rotate=90]{Is Obsolete};} &
+\multicolumn{3}{c|}{\tikz{\node[rotate=90]{\shortstack[c]{Secondary\\file type}};}} &
+\multicolumn{3}{c|}{\tikz{\node[rotate=90]{Disposition};}} &
+\multicolumn{3}{c|}{\tikz{\node[rotate=90]{File type};}} &
+\multicolumn{4}{c|}{Open} &
+\multicolumn{21}{c|}{\shortstack[c]{Location of Pointer\\Preceding HDR1 label\\in Data Buffer}} &
+\multicolumn{12}{c|}{\shortstack[c]{Block num.\\where file\\starts}} &
+\multicolumn{12}{c|}{Words to next ID}
+}
+
+\controlworddesc{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+1 & 59 & If set, this FCP indicates EOF; no other bits used. \\
+1 & 58 & If set, file is obsolete \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+3 & 57--55 &
+\begin{tabular}[t]{rl}
+\multicolumn{2}{@{}l}{Secondary file type} \\
+1 & old \\
+2 & new \\
+4 & scatch
+\end{tabular} \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+3 & 54-52 &
+\begin{tabular}[t]{rl}
+\multicolumn{2}{@{}l}{File disposition} \\
+0 & keep \\
+1 & delete at close \\
+2 & delete at termination
+\end{tabular} \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+3 & 51-49 &
+\begin{tabular}[t]{rl}
+\multicolumn{2}{@{}l}{File type} \\
+0 & undefined \\
+1 & sequential access \\
+2 & direct access \\
+3 & mixed access
+\end{tabular} \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+4 & 48--45 & Open \\
+21 & 44--24 & Location of buffer pointer preceding the HDR1 label for this file \\
+12 & 23--12 & Data block number where the file starts \\
+12 & 11--0  & Words to next file control pointer
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+\section{File History Words} \label{Sec.FileHistoryWords}
+
+The file histoy words immediately follow every file control pointer.
+
+%%%%%%%%%%%%%%%%% WORD 1 (1-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{File History Word 1}
+
+\controlword{
+\multicolumn{6}{|c|}{\shortstack[c]{\(\text{ID}_{1}\)\\ N}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{2}\)\\ C}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{3}\)\\ A}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{4}\)\\ R}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{5}\)\\ S}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{6}\)\\ Y}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{7}\)\\ S}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{8}\)\\ T}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{9}\)\\ E}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{10}\)\\ M}}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+60 & 59--0 & Characters 1--10 of the Data Set Identifier (DSI) from the current HDR1 label \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 2 (1-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{File History Word 2}
+
+\controlword{
+\multicolumn{6}{|c|}{\shortstack[c]{\(\text{ID}_{11}\)\\ H}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{12}\)\\ D}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{13}\)\\ 1}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{14}\)\\ 0}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{15}\)\\ 0}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{16}\)\\ 0}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{17}\)\\ 1}} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--} &
+\multicolumn{6}{c|}{--}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+42 & 59--24 & Characters 11--17 of the Data Set Identifier (DSI) from the current HDR1 label \\
+18 & 17--0  & Spaces \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 3 (1-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{File History Word 3}
+
+\controlword{
+\multicolumn{15}{|c|}{Last time file read} &
+\multicolumn{9}{c|}{\shortstack[c]{Last day\\file read}} &
+\multicolumn{6}{c|}{\shortstack[c]{Last year\\file read}} &
+\multicolumn{15}{c|}{Last time file written} &
+\multicolumn{9}{c|}{\shortstack[c]{Last day\\file written}} &
+\multicolumn{6}{c|}{\shortstack[c]{Last year\\file written}}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+15 & 59--45 & Last time the file was read \\
+ 9 & 44--36 & Last day of year file was read \\
+ 6 & 35--30 & Last year file was read (\(0 = 1976\)) \\
+15 & 29--15 & Last time the file was written \\
+ 9 & 14--6  & Last day of year file was written \\
+ 6 &  5--0  & Last year file was written (\(0 = 1976\)) \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 4 (1-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{File History Word 4}
+
+\controlword{
+\multicolumn{36}{|c|}{Open} &
+\multicolumn{12}{c|}{Use Count} &
+\multicolumn{12}{c|}{Version/generation number}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+36 & 59--24 & Open \\
+12 & 23--12 & Use count; i.e., the number of times the file was referenced. Needed for PLIB. \\
+12 & 11--0  & Version number/generation number \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 5 (1-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{File History Word 5}
+
+\controlword{
+\multicolumn{30}{|c|}{Password for reading} &
+\multicolumn{30}{c|}{Password for writing}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+30 & 59--30 & Password for reading \\
+30 & 29--0  & Password for writing \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 6 (1-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{File History Word 6}
+
+\controlword{
+\multicolumn{30}{|c|}{Record length} &
+\multicolumn{30}{c|}{Maximum Record Number}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+30 & 59--30 & Record length \\
+30 & 29--0  & Maximum record number \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 7 (1-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{File History Word 7}
+
+\controlword{
+\multicolumn{12}{|c|}{Creation year in DPC} &
+\multicolumn{18}{c|}{Creation day in DPC} &
+\multicolumn{12}{c|}{Expiration year in DPC} &
+\multicolumn{18}{c|}{Expiration day in DPC}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+12 & 59--48 & Creation year in DPC \\
+18 & 47--30 & Creation day in DPC \\
+12 & 29--18 & Expiration year in DPC \\
+18 & 17--0  & Expiration day in DPC \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 8 (1-based indices) %%%%%%%%%%%%%%%%%%
+
+\subsection{File History Word 8}
+
+\controlword{
+\multicolumn{60}{|c|}{Open}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+60 & 59--0 & Open \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                                     %
+%                                BLOCK CONTROL POINTERS                               %
+%                                                                                     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Block Control Pointer (BCP)}
+
+%%%%%%%%%%%%%%%%% WORD 9 %%%%%%%%%%%%%%%%%%
+
+\subsection{BCP Word 9}
+
+\controlword{
+\tikz{\node [rotate=90] {No Rec. Start};} &
+\multicolumn{14}{c|}{Open} &
+\multicolumn{21}{c|}{Last record in data block N} &
+\multicolumn{24}{c|}{Words to first pointer in data block N}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 1 & 59     & If set, no record starts in this block. \\
+14 & 58--45 & Open \\
+21 & 44--24 & Last record starting in data block N \\
+24 & 23--0  & Words to first pointer in data block N \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 10 %%%%%%%%%%%%%%%%%%
+
+\subsection{BCP Word \(+9+M-1\)}
+
+\controlword{
+\tikz{\node [rotate=90] {No Rec. Start};} &
+\multicolumn{14}{c|}{Open} &
+\multicolumn{21}{c|}{Last Record in Data Block M} &
+\multicolumn{24}{c|}{Words to First Pointer in Block M}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 1 & 59     & If set, no record starts in this block. \\
+14 & 58--45 & Open \\
+21 & 44--24 & Last record for the number of data blocks M that contain the file \\
+24 & 23--0  & Words to first pointer in the number of data blocks M that contain the file \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%% WORD 11 %%%%%%%%%%%%%%%%%%
+
+\subsection{BCP Word \(+9+M\)}
+
+\controlword{
+\multicolumn{60}{|c|}{Repeat of File Control Word +28}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+60 & 59--0 & Next file control pointer \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                                     %
+%                                  DATA BUFFER FLAGS                                  %
+%                                                                                     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Data Buffer Flags}
+
+Also known as the ``record control word" and the ``"
+
+\controlword{
+\tikz{\node[rotate=90]{Record start};} &
+\tikz{\node[rotate=90]{EOD};} &
+\tikz{\node[rotate=90]{EOF};} &
+\tikz{\node[rotate=90]{Load point};} &
+\tikz{\node[rotate=90]{Label rec. follows};} &
+\tikz{\node[rotate=90]{EOL};} &
+\tikz{\node[rotate=90]{Parity error};} &
+\tikz{\node[rotate=90]{Rec. not written};} &
+\tikz{\node[rotate=90]{Rec. short};} &
+\multicolumn{6}{c|}{\shortstack[c]{No. bits.\\in last\\ dataword}} &
+\multicolumn{5}{c|}{\shortstack[c]{Mode\\of\\data}} &
+\multicolumn{19}{c|}{Words to previous pointer} &
+\multicolumn{21}{c|}{Words to next pointer}
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+1 & 59 & Start of record \\
+1 & 58 & End of data in this volume \\
+1 & 57 & End of file \\
+1 & 56 & Load point for tape simulation \\
+1 & 55 & Label record follows \\
+1 & 54 & End of label group file mark \\
+1 & 53 & Source record had a parity error \\
+1 & 52 & Record not written (direct access volume) \\
+1 & 51 & Record shorter than words to next pointer-1, length is in bits 0-21 of first data word \\
+6 & 50--45 & Number of bits in last data word controlled by this pointer \\
+5 & 44-40 & Mode of data in this record (see Data Type bits 51--44 of first word of SYSLBN) \\
+19 & 39--21 & Words to previous buffer pointer \\
+21 & 20--0 & Words to next buffer pointer \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                                     %
+%                               FIRST END-OF-FILE LABEL                               %
+%                                                                                     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{First End-Of-File Label (EOF1)}
+
+Note that characters 5--54 and 61--80 of EOF1 are the same as those of HDR1.
+
+\subsection{EOF1 Word 0}
+
+\controlword{
+\multicolumn{6}{|c|}{E} &
+\multicolumn{6}{c|}{O} &
+\multicolumn{6}{c|}{F} &
+\multicolumn{6}{c|}{1} &
+}
+
+\controlworddescb{
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+18 & 59-42 & \\
+ 6 & 41-46 & \\
+ 6 & & \\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+}
+
+\end{document}
