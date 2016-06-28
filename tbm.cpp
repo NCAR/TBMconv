@@ -204,8 +204,27 @@ fhw_data->maxRecordNum, 5, fhw_text->maxRecordNum,
 );
 }
 
-void print_blockControlPointer(BlockControlPointer const*const bcp, const size_t offset)
+void print_blockControlPointer(BlockControlPointer const*const bcp,
+                               const size_t offset, const int printHorizontal,
+                               const int printHeader)
 {
+if (printHorizontal) {
+if (printHeader) {
+printf(
+"          | no record   |          | last record in | words to first pointer\n"
+"offset    | starts here | checksum | data block N   | in data block N       \n"
+"==========+=============+==========+================+=======================\n"
+);
+}
+printf(
+"%9ld | %11ld | %8ld | %14ld | %22ld\n",
+offset/60,
+bcp->noRecordStartsHere,
+bcp->checksum,
+bcp->lastRecord,
+bcp->wordsToFirstPtr
+);
+} else {
 printf("=== Block Control Pointer ===\n");
 print_offset(offset);
 printf(
@@ -218,6 +237,7 @@ bcp->lastRecord,
 bcp->checksum,
 bcp->noRecordStartsHere
 );
+}
 }
 
 void print_dataBufferFlags(DataBufferFlags const*const dbf,

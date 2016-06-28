@@ -202,10 +202,24 @@ getDisplay:
 				} while (responseValue && !dbf.isEOF);
 				break;
 			case 3: /* Block Control Pointer */
-				gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &bcp,
-				                         offset%8, 60, 0,
-				                         sizeof(BlockControlPointer)/8);
-				print_blockControlPointer(&bcp, offset);
+				while (1) {
+					fprintf(stderr, "How many BCPs? [1-%ld] ",
+					        decodeAmount/sizeof(BlockControlPointer));
+					getline(&responseText, &responseTextLen, stdin);
+					responseValue = atoi(responseText);
+					if ((size_t) responseValue > decodeAmount/sizeof(BlockControlPointer)) {
+						fprintf(stderr, "Value too large.");
+					} else {
+						break;
+					}
+				}
+				for (i = 0; i < responseValue; i++) {
+					gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &bcp,
+					                         offset%8, 60, 0,
+					                         sizeof(BlockControlPointer)/8);
+					print_blockControlPointer(&bcp, offset, responseValue, i == 0);
+					offset += 60;
+				}
 				break;
 			case 4: /* File Control Pointer */
 				gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &fcp,

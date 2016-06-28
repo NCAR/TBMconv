@@ -469,7 +469,8 @@ void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
                            FileHistoryWord_Data const*const fhw_data,
                            const size_t offset);
 void print_blockControlPointer(BlockControlPointer const*const bcp,
-                               const size_t offset);
+                               const size_t offset, const int printHorizontal,
+                               const int printHeader);
 void print_dataBufferFlags(DataBufferFlags const*const dbf,
                            const size_t offset, const int printHorizontal,
                            const int printHeader);
