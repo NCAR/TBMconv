@@ -124,15 +124,18 @@ getDisplay:
 		fprintf(stderr,
 		        "How would you like to display the data?\n"
 		        "\n"
-		        "\t1) 6-bit DPC\n"
-		        "\t2) Data Buffer Flags (aka ``Record Control Word\")\n"
-		        "\t3) Block Control Pointer\n"
-		        "\t4) File Control Pointer\n"
-		        "\t5) File History Word\n"
-		        "\t6) SYSLBN\n"
-		        "\t7) NotQuiteSYSLBN\n"
+		        "\t 1) 6-bit DPC\n"
+		        "\t 2) Data Buffer Flags (aka ``Record Control Word\")\n"
+		        "\t 3) Block Control Pointer\n"
+		        "\t 4) File Control Pointer\n"
+		        "\t 5) File History Word\n"
+		        "\t 6) SYSLBN\n"
+		        "\t 7) NotQuiteSYSLBN\n"
+		        "\t 8) VOL1\n"
+		        "\t 9) HDR1\n"
+		        "\t10) HDR2\n"
 		        "\n"
-		        "Enter a choice [1-7]: ");
+		        "Enter a choice [1-10]: ");
 				
 		getline(&responseText, &responseTextLen, stdin);
 		responseValue = atoi(responseText);
@@ -212,6 +215,36 @@ getNumChars:
 				                         (uint64_t*) &nqsyslbn_data, offset%8,
 				                         60, 0, sizeof(NotQuiteSYSLBN_Data)/8);
 				print_nqsyslbn(&nqsyslbn_text, &nqsyslbn_data, offset);
+				break;
+			case 8: /* VOL1 */
+				gbytes<uint8_t,uint8_t>(inBuf+(offset/8),
+				                        (uint8_t*) &(syslbn_text.vol1), offset%8,
+				                        6, 0, sizeof(HDR1_Text));
+				cdc_decode((char*) &(syslbn_text.vol1), sizeof(HDR1_Text));
+				gbytes<uint8_t,uint64_t>(inBuf+(offset/8),
+				                         (uint64_t*) &(syslbn_data.vol1), offset%8,
+				                         60, 0, sizeof(HDR1_Data)/8);
+				print_vol1(&(syslbn_text.vol1), &(syslbn_data.vol1), offset);
+				break;
+			case 9: /* HDR1 */
+				gbytes<uint8_t,uint8_t>(inBuf+(offset/8),
+				                        (uint8_t*) &(syslbn_text.hdr1), offset%8,
+				                        6, 0, sizeof(HDR1_Text));
+				cdc_decode((char*) &(syslbn_text.hdr1), sizeof(HDR1_Text));
+				gbytes<uint8_t,uint64_t>(inBuf+(offset/8),
+				                         (uint64_t*) &(syslbn_data.hdr1), offset%8,
+				                         60, 0, sizeof(HDR1_Data)/8);
+				print_hdr1(&(syslbn_text.hdr1), &(syslbn_data.hdr1), offset);
+				break;
+			case 10: /* HDR2 */
+				gbytes<uint8_t,uint8_t>(inBuf+(offset/8),
+				                        (uint8_t*) &(syslbn_text.hdr2), offset%8,
+				                        6, 0, sizeof(HDR1_Text));
+				cdc_decode((char*) &(syslbn_text.hdr2), sizeof(HDR1_Text));
+				gbytes<uint8_t,uint64_t>(inBuf+(offset/8),
+				                         (uint64_t*) &(syslbn_data.hdr2), offset%8,
+				                         60, 0, sizeof(HDR1_Data)/8);
+				print_hdr2(&(syslbn_text.hdr2), &(syslbn_data.hdr2), offset);
 				break;
 			default:
 				fprintf(stderr, "Invalid selection.\n");
