@@ -144,13 +144,15 @@ getDisplay:
 
 		switch (responseValue) {
 			case 1: /* 6-bit DPC */
-getNumChars:
-				fprintf(stderr, "How many characters? [1-%ld] ", decodeAmount);
-				getline(&responseText, &responseTextLen, stdin);
-				responseValue = atoi(responseText);
-				if ((size_t) responseValue > decodeAmount) {
-					fprintf(stderr, "Value too large.");
-					goto getNumChars;
+				while (1) {
+					fprintf(stderr, "How many characters? [1-%ld] ", decodeAmount);
+					getline(&responseText, &responseTextLen, stdin);
+					responseValue = atoi(responseText);
+					if ((size_t) responseValue > decodeAmount) {
+						fprintf(stderr, "Value too large.");
+					} else {
+						break;
+					}
 				}
 				gbytes<uint8_t,char>(inBuf+(offset/8), decodeBuf, offset%8,
 				                     6, 0, responseValue);
