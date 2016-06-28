@@ -220,12 +220,41 @@ bcp->noRecordStartsHere
 );
 }
 
-void print_dataBufferFlags(DataBufferFlags const*const dbf, const size_t offset)
+void print_dataBufferFlags(DataBufferFlags const*const dbf,
+                           const size_t offset, const int printHorizontal,
+                           const int printHeader)
 {
+if (printHorizontal) {
+if (printHeader) {
+printf(
+"          |next   |prev   |record|    |record |record |has   |end  |label  |is   |   |   |is    \n"
+"          |pointer|pointer|data  |num |is     |not    |parity|label|record |load |is |is |record\n"
+"    offset|offset |offset |mode  |bits|shorter|written|error |group|follows|point|EOF|EOD|start \n"
+"==========+=======+=======+======+====+=======+=======+======+=====+=======+=====+===+===+======\n"
+);
+}
+printf(
+"%10ld|%7ld|%7ld|%6ld|%4ld|%7ld|%7ld|%6ld|%5ld|%7ld|%5ld|%3ld|%3ld|%6ld\n",
+offset/60,
+dbf->nextPtrOffset,
+dbf->prevPtrOffset,
+dbf->recordDataMode,
+dbf->numBits,
+dbf->recordIsShorter,
+dbf->recordNotWritten,
+dbf->sourceRecordHasParityError,
+dbf->endLabelGroup,
+dbf->labelRecordFollows,
+dbf->isLoadPoint,
+dbf->isEOF,
+dbf->isEOD,
+dbf->isRecordStart
+);
+} else {
 printf("=== Data Buffer Flags ===\n");
 print_offset(offset);
 printf(
-"[raw data]                 = %015lX\n"
+"[raw data]                 = 0x%015lX\n"
 "nextPtrOffset              = %ld\n"
 "prevPtrOffset              = %ld\n"
 "recordDataMode             = %ld (%s)\n"
@@ -254,6 +283,7 @@ dbf->isEOF,
 dbf->isEOD,
 dbf->isRecordStart
 );
+}
 }
 
 void print_offset(const size_t offset)
