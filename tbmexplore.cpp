@@ -20,6 +20,7 @@
 int main(int argc, char **argv)
 {
 	FILE *fp;
+	char *s;
 	char *inFileName;
 	SYSLBN_Data syslbn_data;
 	SYSLBN_Text syslbn_text;
@@ -43,6 +44,7 @@ int main(int argc, char **argv)
 	size_t responseTextLen = 0;
 	int responseValue;
 	int i;
+	int first;
 
 	if (argc != 2) {
 		fprintf(stderr, "Error: Require one argument.\n");
@@ -167,10 +169,31 @@ getNumChars:
 				}
 				break;
 			case 2: /* Data Buffer Flag */
-				gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &dbf,
-				                         offset%8, 60, 0,
-				                         sizeof(DataBufferFlags)/8);
-				print_dataBufferFlags(&dbf, offset);
+				while (1) {
+					fprintf(stderr, "Follow Data Buffer Flags until EOF? [yn] ");
+					getline(&responseText, &responseTextLen, stdin);
+					if ((s = strchr(responseText, '\n'))) {
+						*s = '\0';
+					}
+					if (!strcmp(responseText, "n")) {
+						responseValue = 0;
+						break;
+					} else if (!strcmp(responseText, "y")) {
+						responseValue = 1;
+						break;
+					}
+					// fall through
+					fprintf(stderr, "Invalid response!\n");
+				}
+				first = 1;
+				do {
+					gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &dbf,
+					                         offset%8, 60, 0,
+					                         sizeof(DataBufferFlags)/8);
+					print_dataBufferFlags(&dbf, offset, responseValue, first);
+					offset += dbf.nextPtrOffset*60;
+					first = 0;
+				} while (responseValue && !dbf.isEOF);
 				break;
 			case 3: /* Block Control Pointer */
 				gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &bcp,
