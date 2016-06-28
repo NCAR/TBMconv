@@ -17,6 +17,8 @@
 
 #define LINE_LENGTH 100
 
+void print_bin(uint64_t bin, unsigned numDigits);
+
 int main(int argc, char **argv)
 {
 	FILE *fp;
@@ -43,7 +45,7 @@ int main(int argc, char **argv)
 	char *responseText = NULL;
 	size_t responseTextLen = 0;
 	int responseValue;
-	int i;
+	int i, j;
 	int first;
 
 	if (argc != 2) {
@@ -136,8 +138,10 @@ getDisplay:
 		        "\t 8) VOL1\n"
 		        "\t 9) HDR1\n"
 		        "\t10) HDR2\n"
+		        "\t11) 20-bit integers\n"
+		        "\t12) 60-bit integers\n"
 		        "\n"
-		        "Enter a choice [1-10]: ");
+		        "Enter a choice [1-12]: ");
 				
 		getline(&responseText, &responseTextLen, stdin);
 		responseValue = atoi(responseText);
@@ -271,6 +275,49 @@ getDisplay:
 				                         60, 0, sizeof(HDR1_Data)/8);
 				print_hdr2(&(syslbn_text.hdr2), &(syslbn_data.hdr2), offset);
 				break;
+			case 11: /* 20-bit integers */
+				while (1) {
+					fprintf(stderr, "How many values? [1-%ld] ",
+					        (readAmount*8)/20);
+					getline(&responseText, &responseTextLen, stdin);
+					responseValue = atoi(responseText);
+					if ((size_t) responseValue > (readAmount*8)/20) {
+						fprintf(stderr, "Value too large.");
+					} else {
+						break;
+					}
+				}
+				gbytes<uint8_t,uint32_t>(inBuf+(offset/8),
+				                         (uint32_t*) decodeBuf, offset%8,
+				                         20, 0, responseValue);
+				for (i = 0; i < responseValue; i += 3) {
+					for (j = 0; j < 3; j++) {
+						fprintf(stdout, "%7d ", ((uint32_t*) decodeBuf)[i+j]);
+					}
+					fputc('\n', stdout);
+				}
+				break;
+			case 12: /* 20-bit integers */
+				while (1) {
+					fprintf(stderr, "How many values? [1-%ld] ",
+					        (readAmount*8)/20);
+					getline(&responseText, &responseTextLen, stdin);
+					responseValue = atoi(responseText);
+					if ((size_t) responseValue > (readAmount*8)/60) {
+						fprintf(stderr, "Value too large.");
+					} else {
+						break;
+					}
+				}
+				gbytes<uint8_t,uint64_t>(inBuf+(offset/8),
+				                         (uint64_t*) decodeBuf, offset%8,
+				                         60, 0, responseValue);
+				for (i = 0; i < responseValue; i++) {
+					fprintf(stdout, "%19ld ", ((uint64_t*) decodeBuf)[i]);
+					print_bin(((uint64_t*) decodeBuf)[i], 60);
+					fputc('\n', stdout);
+				}
+				break;
 			default:
 				fprintf(stderr, "Invalid selection.\n");
 				goto getDisplay;
@@ -331,4 +378,14 @@ getDisplay:
 	free(inBuf);
 
 	return 0;
+}
+
+void print_bin(uint64_t bin, unsigned numDigits)
+{
+	int i = numDigits;
+
+	while (i > 0) {
+		i--;
+		fputc(((bin >> i) & 1) + '0', stdout);
+	}
 }
