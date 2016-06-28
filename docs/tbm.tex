@@ -59,13 +59,6 @@ Length & \multicolumn{1}{l}{Bits} & Type & API & Description \\
 \author{Nicholas DeCicco}
 \maketitle
 
-\controlword{
-\rotate{Record start flag} &
-\multicolumn{2}{c}{} &
-\multicolumn{12}{|c|}{Checksum} &
-\multicolumn{21}{c|}{Last Record} &
-\multicolumn{24}{c|}{Start Word Number}
-}
 
 \chapter{}
 
@@ -899,7 +892,8 @@ The file histoy words immediately follow every file control pointer.
 
 \controlword{
 \rotate{No Rec. Start} &
-\multicolumn{14}{c|}{Open} &
+\multicolumn{2}{c}{\rotate{Open}} &
+\multicolumn{12}{|c|}{Checksum} &
 \multicolumn{21}{c|}{Last record in data block N} &
 \multicolumn{24}{c|}{Words to first pointer in data block N}
 }
@@ -907,11 +901,13 @@ The file histoy words immediately follow every file control pointer.
 \controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  1 & 59     & Binary & noRecordStartsHere & If set, no record starts in this block. \\
-14 & 58--45 & ---    & \textrm{---}       & Open \\
+ 2 & 58--57 & ---    & \textrm{---}       & Open \\
+12 & 56--45 & Binary & checksum           & Checksum\footnotemark \\
 21 & 44--24 & Binary & lastRecord         & Last record starting in data block N \\
-24 & 23--0  &        & wordsToFirstPtr    & Words to first pointer in data block N \\
+24 & 23--0  & Binary & wordsToFirstPtr    & Words to first pointer in data block N \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 }
+\footnotetext{Not mentioned in the NCAR Tech Note, but can be seen referenced on line 96 of the \texttt{as.s} CAL source file for \texttt{tbm2cos}.}
 
 %%%%%%%%%%%%%%%%% WORD 10 %%%%%%%%%%%%%%%%%%
 
