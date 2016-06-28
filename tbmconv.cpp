@@ -73,19 +73,19 @@ int main(int argc, char **argv)
 	print_syslbn(&syslbn_text, &syslbn_data, 0);
 
 	uint8_t test[5];
-	uint64_t in = syslbn_data.vol1;
+	uint64_t in = syslbn_data.vol1.vol1;
 	gbytes<uint64_t,uint8_t>(&in, test, 64-4*6, 6, 0, 4);
 	cdc_decode((char*) test, 4);
 	test[4] = '\0';
 	printf("test: %s\n", test);
 
-	assert(syslbn_data.vol1 == MAGIC_VOL1);
-	assert(syslbn_data.hdr1 == MAGIC_HDR1);
-	assert(syslbn_data.dataSetID_1_6 == MAGIC_NCARSY);
-	assert(syslbn_data.dataSetID_7_12 == MAGIC_STEMHD);
-	assert(syslbn_data.dataSetID_13_16 == MAGIC_1000);
-	assert(syslbn_data.dataSetID_17 == MAGIC_1);
-	assert(syslbn_data.hdr2 == MAGIC_HDR2);
+	assert(syslbn_data.vol1.vol1 == MAGIC_VOL1);
+	assert(syslbn_data.hdr1.hdr1 == MAGIC_HDR1);
+	assert(syslbn_data.hdr1.dataSetID_1_6 == MAGIC_NCARSY);
+	assert(syslbn_data.hdr1.dataSetID_7_12 == MAGIC_STEMHD);
+	assert(syslbn_data.hdr1.dataSetID_13_16 == MAGIC_1000);
+	assert(syslbn_data.hdr1.dataSetID_17 == MAGIC_1);
+	assert(syslbn_data.hdr2.hdr2 == MAGIC_HDR2);
 
 	/* The location of the first file control pointer is specified in the
 	 * SYSLBN.

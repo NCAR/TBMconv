@@ -23,6 +23,8 @@ int main(int argc, char **argv)
 	char *inFileName;
 	SYSLBN_Data syslbn_data;
 	SYSLBN_Text syslbn_text;
+	NotQuiteSYSLBN_Data nqsyslbn_data;
+	NotQuiteSYSLBN_Text nqsyslbn_text;
 	uint8_t *inBuf;
 	size_t readAmount;
 	BlockControlPointer bcp;
@@ -128,8 +130,9 @@ getDisplay:
 		        "\t4) File Control Pointer\n"
 		        "\t5) File History Word\n"
 		        "\t6) SYSLBN\n"
+		        "\t7) NotQuiteSYSLBN\n"
 		        "\n"
-		        "Enter a choice [1-6]: ");
+		        "Enter a choice [1-7]: ");
 				
 		getline(&responseText, &responseTextLen, stdin);
 		responseValue = atoi(responseText);
@@ -199,6 +202,16 @@ getNumChars:
 				                         (uint64_t*) &syslbn_data, offset%8, 
 				                         60, 0, sizeof(SYSLBN_Data)/8);
 				print_syslbn(&syslbn_text, &syslbn_data, offset);
+				break;
+			case 7: /* NotQuiteSYSLBN */
+				gbytes<uint8_t,uint8_t>(inBuf+(offset/8),
+				                        (uint8_t*) &nqsyslbn_text, offset%8,
+				                        6, 0, sizeof(NotQuiteSYSLBN_Text));
+				cdc_decode((char*) &nqsyslbn_text, sizeof(SYSLBN_Text));
+				gbytes<uint8_t,uint64_t>(inBuf+(offset/8),
+				                         (uint64_t*) &nqsyslbn_data, offset%8,
+				                         60, 0, sizeof(NotQuiteSYSLBN_Data)/8);
+				print_nqsyslbn(&nqsyslbn_text, &nqsyslbn_data, offset);
 				break;
 			default:
 				fprintf(stderr, "Invalid selection.\n");

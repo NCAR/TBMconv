@@ -8,19 +8,10 @@
 #include <stdint.h>
 #include "tbm.hpp"
 
-void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data,
-                  const size_t offset)
+void print_vol1(VOL1_Text const*const text, VOL1_Data const*const data,
+                const size_t offset)
 {
-printf(" ==== SYSLBN ==== \n");
-print_offset(offset);
 printf(
-"machineType        = %7ld (%s)\n"
-"density            = %7ld (%s)\n"
-"dataType           = %7ld (%s)\n"
-"numTracks          = %7ld\n"
-"bk                 = %7ld\n"
-"numBKBlocks        = %7ld\n"
-"labelBufLen        = %7ld\n"
 " ===== VOL1 ===== \n"
 "vol1               = \"%.*s\" (0x%06lX)\n"
 "volSerialName1     = \"%.*s\"\n"
@@ -28,7 +19,21 @@ printf(
 "acntNum            = \"%.*s\" (0x%06lX%06lX)\n"
 "sciNum             = \"%.*s\" (0x%03lX)\n"
 "tbmVolSerial       = \"%.*s\" (0x%lX)\n"
-"sysLevelCode       = \"%c\" (0x%lX)\n"
+"sysLevelCode       = \"%c\" (0x%lX)\n",
+4, text->vol1, data->vol1,
+6, text->volSerialName1,
+   text->vol1acc, data->acc, text->vol1acc == ' ' ? "unlimited access" : "special handling",
+8, text->accountingNum, data->acntNum_1_3, data->acntNum_4_8,
+2, text->sciNum, data->sciNum_1_4,
+6, text->tbmVolSerial, data->tbmVolSerial,
+text->sysLevelCode, data->sysLevelCode
+);
+}
+
+void print_hdr1(HDR1_Text const*const text, HDR1_Data const*const data,
+                const size_t offset)
+{
+printf(
 " ===== HDR1 ===== \n"
 "hdr1               = \"%.*s\" (0x%06lX)\n"
 "dataSetID          = \"%.*s\"\n"
@@ -41,34 +46,7 @@ printf(
 "expDate            = \"%.*s\"\n"
 "accChar            = \"%c\" (0x%02lX)\n"
 "blockCount         = \"%.*s\"\n"
-"sysCode            = \"%.*s\"\n"
-" ===== HDR2 ===== \n"
-"hdr2               = \"%.*s\" (0x%06lX)\n"
-"hdr2label          = \"%.*s\"\n"
-" ==== SYSLBN ==== \n"
-"fileCtrlPtrOff     = %5ld (\"%.*s\")\n"
-"blkCtrlPtrOff      = %5ld (\"%.*s\")\n"
-"firstFCPOff        = %5ld (\"%.*s\")\n"
-"ctrlCardOpenOff    = %5ld (\"%.*s\")\n"
-"openMergeAreaOff   = %5ld (\"%.*s\")\n"
-"curCtrlCardOpenOff = %5ld (\"%.*s\")\n"
-"fcpToBlkCtrlOff    = %5ld (\"%.*s\")\n",
-data->machineType, data->machineType <= MACHINE_TYPE_MAX ? machineTypes[data->machineType].str : "--",
-data->density, data->density <= DENSITY_MAX ? densities[data->density].str : "--",
-data->dataType, data->dataType <= DATA_TYPE_MAX ? dataTypes[data->dataType].str : "--",
-data->numTracks,
-data->bk,
-data->numBKBlocks,
-data->labelBufLen,
-// VOL1
-4, text->vol1, data->vol1,
-6, text->volSerialName1,
-   text->vol1acc, data->acc, text->vol1acc == ' ' ? "unlimited access" : "special handling",
-8, text->accountingNum, data->acntNum_1_3, data->acntNum_4_8,
-2, text->sciNum, data->sciNum_1_4,
-6, text->tbmVolSerial, data->tbmVolSerial,
-text->sysLevelCode, data->sysLevelCode,
-// HDR1
+"sysCode            = \"%.*s\"\n",
  4, text->hdr1, data->hdr1,
 17, text->dataSetID,
  6, text->volSerialName2,
@@ -80,11 +58,70 @@ text->sysLevelCode, data->sysLevelCode,
  6, text->expirationDate,
     text->accessibilityChar, data->accChar,
  6, text->blockCount,
-13, text->sysCode,
-// HDR2
+13, text->sysCode
+);
+}
+
+
+void print_hdr2(HDR2_Text const*const text, HDR2_Data const*const data,
+                const size_t offset)
+{
+printf(
+" ===== HDR2 ===== \n"
+"hdr2               = \"%.*s\" (0x%06lX)\n"
+"hdr2label          = \"%.*s\"\n",
  4, text->hdr2, data->hdr2,
-76, text->hdr2label,
-// SYSLBN
+76, text->hdr2label
+);
+}
+
+#define GET_REL_OFFSET(baseOff, baseMemb, memb) \
+	baseOff + (( (char*) &(baseMemb->memb) - (char*) &(baseMemb) )/8)*60
+
+void print_nqsyslbn(NotQuiteSYSLBN_Text const*const text,
+                    NotQuiteSYSLBN_Data const*const data,
+                    const size_t offset)
+{
+print_vol1(&(text->vol1), &(data->vol1), GET_REL_OFFSET(offset, data, vol1));
+print_hdr1(&(text->hdr1), &(data->hdr1), GET_REL_OFFSET(offset, data, hdr1));
+print_hdr2(&(text->hdr2), &(data->hdr2), GET_REL_OFFSET(offset, data, hdr2));
+}
+
+void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data,
+                  const size_t offset)
+{
+printf(" ==== SYSLBN ==== \n");
+print_offset(offset);
+printf(
+"machineType        = %7ld (%s)\n"
+"density            = %7ld (%s)\n"
+"dataType           = %7ld (%s)\n"
+"numTracks          = %7ld\n"
+"bk                 = %7ld\n"
+"numBKBlocks        = %7ld\n"
+"labelBufLen        = %7ld\n",
+data->machineType, data->machineType <= MACHINE_TYPE_MAX ? machineTypes[data->machineType].str : "--",
+data->density, data->density <= DENSITY_MAX ? densities[data->density].str : "--",
+data->dataType, data->dataType <= DATA_TYPE_MAX ? dataTypes[data->dataType].str : "--",
+data->numTracks,
+data->bk,
+data->numBKBlocks,
+data->labelBufLen
+);
+
+print_vol1(&(text->vol1), &(data->vol1), GET_REL_OFFSET(offset, data, vol1));
+print_hdr1(&(text->hdr1), &(data->hdr1), GET_REL_OFFSET(offset, data, hdr1));
+print_hdr2(&(text->hdr2), &(data->hdr2), GET_REL_OFFSET(offset, data, hdr2));
+
+printf(
+" ==== SYSLBN ==== \n"
+"fileCtrlPtrOff     = %5ld (\"%.*s\")\n"
+"blkCtrlPtrOff      = %5ld (\"%.*s\")\n"
+"firstFCPOff        = %5ld (\"%.*s\")\n"
+"ctrlCardOpenOff    = %5ld (\"%.*s\")\n"
+"openMergeAreaOff   = %5ld (\"%.*s\")\n"
+"curCtrlCardOpenOff = %5ld (\"%.*s\")\n"
+"fcpToBlkCtrlOff    = %5ld (\"%.*s\")\n",
 data->fileCtrlPtrOff,     5, text->fileCtrlPtrOff,   
 data->blkCtrlPtrOff,      5, text->blkCtrlPtrOff,
 data->firstFCPOff,        5, text->firstFCPOff,
@@ -112,9 +149,12 @@ printf(
 fcp->nextFCPOff,
 fcp->dataBlkNum,
 fcp->bufferPtrOffset,
-fcp->fileType, fileTypes[fcp->fileType].str,
-fcp->fileDisposition, fileDispositions[fcp->fileDisposition].str,
-fcp->secondaryFileType, secondaryFileTypes[fcp->secondaryFileType].str,
+fcp->fileType, fcp->fileType < FILE_TYPE_MAX ?
+               fileTypes[fcp->fileType].str : "--",
+fcp->fileDisposition, fcp->fileDisposition <= FILE_DISPOSITION_MAX ?
+                      fileDispositions[fcp->fileDisposition].str : "--",
+fcp->secondaryFileType, fcp->secondaryFileType <= SECONDARY_FILE_TYPE_MAX ?
+                        secondaryFileTypes[fcp->secondaryFileType].str : "--",
 fcp->isObsolete,
 fcp->isEOF
 );

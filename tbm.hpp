@@ -110,33 +110,7 @@ const Label fileTypes[] = {
 	{ (char*) "mixed access" }
 };
 
-/**
- * SYSLBN.
- */
 typedef struct {
-/* Word  0 */ 
-              uint64_t labelBufLen        : 20; /** Actual length of the SYSLBN label buffer */
-              uint64_t numBKBlocks        : 12; /** Number of "BK length Data Blocks" in this volume  */
-              uint64_t bk                 :  8; /** "The value of BK from a TLIB card on the 7600".
-                                                    This is described in Table 8-4 on pp. 8.29 (PDF
-                                                    pp. 189) of NCAR Tech Note IA-106 as "size
-                                                    of blocked information on disk in units of
-                                                    10240 words." */
-              uint64_t numTracks          :  4; /** The original number of tape tracks */
-              uint64_t dataType           :  8; /** The data type */
-              uint64_t density            :  4; /** The original density */
-              uint64_t machineType        :  4; /** The machine type */
-
-              uint64_t /* padding */      :  0;
-
-/* Word  1 */ uint64_t /* reserved */     : 64;
-
-/* Word  2 */ uint64_t /* "open" */       : 60;
-              uint64_t /* padding */      :  0;
-
-/* Word  3 */ uint64_t /* "open" */       : 60;
-              uint64_t /* padding */      :  0;
-
 /* Word  4 */ uint64_t volSerialName1     : 36; /** Volume "serial name" */
               uint64_t vol1               : 24; /** "VOL1" -> 0x58F31C */
               uint64_t /* padding */      :  0;
@@ -171,7 +145,9 @@ typedef struct {
               uint64_t /* blank */        : 18;
               uint64_t tbmVolSerial       : 36; /* "TBM Volume Serial Name" */
               uint64_t /* padding */      :  0;
+} VOL1_Data;
 
+typedef struct {
 /* Word 12 */ uint64_t dataSetID_1_6      : 36; /** Data Set Identifier characters 1 through 6 ("NCARSY" => 0x3830524D9) */
               uint64_t hdr1               : 24; /** "HDR1" (0x20449C) */
               uint64_t /* padding */      :  0;
@@ -207,7 +183,9 @@ typedef struct {
 /* Word 19 */ uint64_t /* blank */        : 42;
               uint64_t sysCode_11_13      : 18; /** System code characters 11-13 */
               uint64_t /* padding */      :  0;
+} HDR1_Data;
 
+typedef struct {
 /* Word 20 */ uint64_t hdr2_1_6           : 36; /** "Space for the HDR2 label" */
               uint64_t hdr2               : 24; /** "HDR2" (0x20449D) */
               uint64_t /* padding */      :  0;
@@ -232,6 +210,37 @@ typedef struct {
 
 /* Word 27 */ uint64_t hdr2_67_76         : 60; /** "Space for the HDR2 label" */
               uint64_t /* padding */      :  0;
+} HDR2_Data;
+
+/**
+ * SYSLBN.
+ */
+typedef struct {
+/* Word  0 */ uint64_t labelBufLen        : 20; /** Actual length of the SYSLBN label buffer */
+              uint64_t numBKBlocks        : 12; /** Number of "BK length Data Blocks" in this volume  */
+              uint64_t bk                 :  8; /** "The value of BK from a TLIB card on the 7600".
+                                                    This is described in Table 8-4 on pp. 8.29 (PDF
+                                                    pp. 189) of NCAR Tech Note IA-106 as "size
+                                                    of blocked information on disk in units of
+                                                    10240 words." */
+              uint64_t numTracks          :  4; /** The original number of tape tracks */
+              uint64_t dataType           :  8; /** The data type */
+              uint64_t density            :  4; /** The original density */
+              uint64_t machineType        :  4; /** The machine type */
+
+              uint64_t /* padding */      :  0;
+
+/* Word  1 */ uint64_t /* reserved */     : 64;
+
+/* Word  2 */ uint64_t /* "open" */       : 60;
+              uint64_t /* padding */      :  0;
+
+/* Word  3 */ uint64_t /* "open" */       : 60;
+              uint64_t /* padding */      :  0;
+
+/* Words  4-11 */ VOL1_Data vol1;
+/* Words 12-19 */ HDR1_Data hdr1;
+/* Words 20-27 */ HDR2_Data hdr2;
 
 /* Word 28 */ uint64_t blkCtrlPtrOff      : 30; /** Offset to current block control pointer from SYSMSI */
               uint64_t fileCtrlPtrOff     : 30; /** Offset to current file control pointer */
@@ -248,12 +257,19 @@ typedef struct {
 /* Word 31 */ uint64_t fcpToBlkCtrlOff    : 30; /** Offset from file control pointer to first block control pointer */
               uint64_t /* unused */       : 30;
               uint64_t /* padding */      :  0;
-
 } SYSLBN_Data;
 
 typedef struct __attribute__((packed)) {
-/* Word   0- 3 */ char padding1[40];
-// ==================== VOL1 ====================
+	uint64_t padding1[4];
+/* Words  4-11 */ VOL1_Data vol1;
+	uint64_t padding2;
+/* Words 13-20 */ HDR1_Data hdr1;
+	uint64_t padding3;
+/* Words 20-27 */ HDR2_Data hdr2;
+	uint64_t padding4[2];
+} NotQuiteSYSLBN_Data;
+
+typedef struct {
 /* Word      4 */ char vol1[4];               /** Should read "VOL1" */
 /* Word      4 */ char volSerialName1[6];     /** Volume serial name */
 /* Word      5 */ char vol1acc;               /** Volume 1 label accessibility criteria. From
@@ -271,7 +287,9 @@ typedef struct __attribute__((packed)) {
 /* Word     11 */ char tbmVolSerial[6];       /** TBM volume serial name */
 /* Word     11 */ char padding4[3];
 /* Word     11 */ char sysLevelCode;          /** System level code */
-// ==================== HDR1 ====================
+} VOL1_Text;
+
+typedef struct {
 /* Word     12 */ char hdr1[4];               /** Should read "HDR1" */
 /* Words 12-14 */ char dataSetID[17];         /** Data set identifier (should read
                                                   "NCARSYSTEMHD10001") */
@@ -288,9 +306,21 @@ typedef struct __attribute__((packed)) {
                                                   to zeros by the system." */
 /* Word     18 */ char sysCode[13];           /** System code */
 /* Word     19 */ char padding5[7];
-// ==================== HDR2 ====================
+} HDR1_Text;
+
+typedef struct {
 /* Word     20 */ char hdr2[4];               /** Should read "HDR2" */
 /* Words 20-27 */ char hdr2label[76];         /** Header 2 label */
+} HDR2_Text;
+
+typedef struct __attribute__((packed)) {
+/* Word   0- 3 */ char padding1[40];
+// ==================== VOL1 ====================
+VOL1_Text vol1;
+// ==================== HDR1 ====================
+HDR1_Text hdr1;
+// ==================== HDR2 ====================
+HDR2_Text hdr2;
 // =================== SYSLBN ===================
 /* Word     28 */ char fileCtrlPtrOff[5];     /** Offset to current file control pointer */
 /* Word     28 */ char blkCtrlPtrOff[5];      /** Offset to current block control pointer from SYSMSI */
@@ -302,10 +332,19 @@ typedef struct __attribute__((packed)) {
 /* Word     31 */ char fcpToBlkCtrlOff[5];    /** Offset from file control pointer to first block control pointer */
 } SYSLBN_Text;
 
+typedef struct __attribute__((packed)) {
+char padding1[40];
+VOL1_Text vol1;
+char padding2[10];
+HDR1_Text hdr1;
+char padding3[10];
+HDR2_Text hdr2;
+char padding4[20];
+} NotQuiteSYSLBN_Text;
+
 /** File Control Pointer ("FCP") */
 typedef struct {
-/* Word  0 */
-              uint64_t nextFCPOff          : 12; /** "[Number of?] words to next file control pointer". */
+/* Word  0 */ uint64_t nextFCPOff          : 12; /** "[Number of?] words to next file control pointer". */
               uint64_t dataBlkNum          : 12; /** "Data block number where the file starts". */
               uint64_t bufferPtrOffset     : 21; /* "Location of buffer pointer prceding the HDR1 label for this file" */
               uint64_t /* "open" */        :  4;
@@ -412,8 +451,18 @@ typedef struct {
               uint64_t /* padding */              :  0;
 } DataBufferFlags;
 
+void print_vol1(VOL1_Text const*const text, VOL1_Data const*const data,
+                const size_t offset);
+void print_hdr1(HDR1_Text const*const text, HDR1_Data const*const data,
+                const size_t offset);
+void print_hdr2(HDR2_Text const*const text, HDR2_Data const*const data,
+                const size_t offset);
+
 void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data,
                   const size_t offset);
+void print_nqsyslbn(NotQuiteSYSLBN_Text const*const text,
+                    NotQuiteSYSLBN_Data const*const data,
+                    const size_t offset);
 void print_fileControlPtr(FileControlPointer const*const fcp,
                           const size_t offset);
 void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
