@@ -123,7 +123,7 @@ int main(int argc, char **argv)
 		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &dbf,
 		                         offset%8, 60, 0,
 		                         sizeof(DataBufferFlags)/8);
-		print_dataBufferFlags(&dbf, offset);
+		print_dataBufferFlags(&dbf, offset, 0, 0);
 
 		/* Advance to the next pointer. */
 		offset += 60*dbf.nextPtrOffset;
