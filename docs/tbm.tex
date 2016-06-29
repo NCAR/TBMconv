@@ -59,11 +59,38 @@ Length & \multicolumn{1}{l}{Bits} & Type & API & Description \\
 \author{Nicholas DeCicco}
 \maketitle
 
+\chapter{Overview}
 
-\chapter{}
+Bits 59--30 of word~29 (``offset to first file control pointer"; \texttt{firstFCPOff} in the API) of the SYSLBN block (which begins at offset 0) specify the offset, in 60-bit words, from the start of the file (offset 0) to the first file control pointer (see \cref{Sec.FileControlPointer}). Each file control pointer is followed by a set of file history words (see \cref{Sec.FileHistoryWords}). After the first set of file history words (which immediately follow the first file control pointer), and up to the second file control pointer is where a series of block control pointers (see \cref{Sec.BlockControlPointer}) reside. Each block control pointer is one 60-bit word in length, and there are \texttt{numBKBlocks} of them; as there are this many, one should find the following equivalencies:
 
+\begin{align*}
+	\mathtt{numBKBlocks} =
+	\underbrace{\mathtt{nextFCPOff}}_{\shortstack[c]{
+		From first file\\
+		control pointer\\
+		located at\\
+		\texttt{firstFCPOff}
+	}} - \; (\mathtt{firstFCPOff} + 9)
+\end{align*}
 
-Bits 59--30 of word~29 (``offset to first file control pointer") of the SYSLBN block (which begins at offset 0) specify the offset, in 60-bit words, from the start of the file (offset 0) to the first file control pointer (see \cref{Sec.FileControlPointer}). Each file control pointer is followed by a set of file history words (see \cref{Sec.FileHistoryWords}).
+The length of the file is indicated by the values of \texttt{numBKBlocks} and \texttt{bk} in \texttt{SYSLBN}. The length of the file should be:
+\[
+	\text{file length}_\text{8-bit bytes} = \dfrac{(\texttt{numBKBlocks} + 1) \times \texttt{bk} \times 2048_\text{60-bit words} \times 60_\text{bits per word}}{8_\text{bits per byte}} \mathrm{.}
+\]
+
+The portions of a TBM file where actual data resides are broken into many \textit{data records}; each data record is preceeded by a data buffer flags (see \cref{Sec.DataBufferFlag}) word, also known as a ``record control word." Each data buffer flag contains an offset (relative to it) specifying the location of the next data buffer flag (\texttt{nextPtrOffset} in the \texttt{DataBufferFlags} struct).
+
+Actual data begins at one TLIB/BK block into the file (after some \texttt{DataBufferFlags} and \texttt{VOL1}/\texttt{HDR1}/\texttt{HDR2} metadata). The length of a TLIB block is
+\begin{align*}
+	\text{length}_\text{60-bit words} &= 2048 \times \texttt{bk} \mathrm{,} \\
+	\text{length}_\text{64-bit words} &= \dfrac{2048 \times \texttt{bk} \times 60}{64} \mathrm{.}
+\end{align*}
+
+For example, for the default \texttt{bk} value of \(8\),
+\begin{align*}
+	\text{length}_\text{60-bit words} &= 2048 \times 8 = 16384 \text{ 60-bit words} \mathrm{,} \\
+	\text{length}_\text{64-bit words} &= \dfrac{2048 \times 8 \times 60}{64} = 15360 \text{ 64-bit words} \mathrm{.}
+\end{align*}
 
 \chapter{Reference}
 
@@ -643,6 +670,8 @@ These words contain the HDR2 label.
 
 \subsection{SYSLBN Word 31}
 
+Note that \texttt{fcpToBlkCtrlOff} appears to be off by one; it has a value of 10 when it should be 9.
+
 \controlword{
 \multicolumn{30}{|c|}{Unused} &
 \multicolumn{30}{c|}{Offset from FCP to first BCP}
@@ -654,7 +683,6 @@ These words contain the HDR2 label.
 30 & 29--0  & Binary & fcpToBlkCtrlOff & Offset from File Control Pointer to first Block Control Pointer \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 }
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                                     %
@@ -884,11 +912,9 @@ The file histoy words immediately follow every file control pointer.
 %                                                                                     %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Block Control Pointer (BCP)}
+\section{Block Control Pointer (BCP)} \label{Sec.BlockControlPointer}
 
-%%%%%%%%%%%%%%%%% WORD 9 %%%%%%%%%%%%%%%%%%
-
-\subsection{BCP Word 9}
+Note that the way these are depicted in the NCAR Technical Note is rather confusing; the technical note shows what at first appear to be three distinct ``block control pointers," one which is ``word 9", another which is word ``\(+9+M-1\)", and another which is word ``\(+9+M\)". Really what the technical note is trying to convey is that there are \(M\) block control pointers (equal to \texttt{bk}); the first block control pointer starts at an offset \(+9\) after the first file control pointer; and immediately after the last block control pointer (\(+9+M\)) is another file control pointer.
 
 \controlword{
 \rotate{No Rec. Start} &
@@ -909,40 +935,6 @@ The file histoy words immediately follow every file control pointer.
 }
 \footnotetext{Not mentioned in the NCAR Tech Note, but can be seen referenced on line 96 of the \texttt{as.s} CAL source file for \texttt{tbm2cos}.}
 
-%%%%%%%%%%%%%%%%% WORD 10 %%%%%%%%%%%%%%%%%%
-
-\subsection{BCP Word \(+9+M-1\)}
-
-\controlword{
-\rotate{No Rec. Start} &
-\multicolumn{14}{c|}{Open} &
-\multicolumn{21}{c|}{Last Record in Data Block M} &
-\multicolumn{24}{c|}{Words to First Pointer in Block M}
-}
-
-\controlworddesc{
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- 1 & 59     &     &              & If set, no record starts in this block. \\
-14 & 58--45 & --- & \textrm{---} & Open \\
-21 & 44--24 &     &              & Last record for the number of data blocks M that contain the file \\
-24 & 23--0  &     &              & Words to first pointer in the number of data blocks M that contain the file \\
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-}
-
-%%%%%%%%%%%%%%%%% WORD 11 %%%%%%%%%%%%%%%%%%
-
-\subsection{BCP Word \(+9+M\)}
-
-\controlword{
-\multicolumn{60}{|c|}{Repeat of File Control Word +28}
-}
-
-\controlworddesc{
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-60 & 59--0 & & & Next file control pointer \\
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                                     %
 %                                  DATA BUFFER FLAGS                                  %
@@ -951,7 +943,7 @@ The file histoy words immediately follow every file control pointer.
 
 \section{Data Buffer Flags} \label{Sec.DataBufferFlag}
 
-Also known as the ``record control word" and the ``"
+Also known as the ``record control word" or the ``data buffer field."
 
 \controlword{
 \rotate{Record start} &
