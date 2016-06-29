@@ -72,13 +72,6 @@ int main(int argc, char **argv)
 
 	print_syslbn(&syslbn_text, &syslbn_data, 0);
 
-	uint8_t test[5];
-	uint64_t in = syslbn_data.vol1.vol1;
-	gbytes<uint64_t,uint8_t>(&in, test, 64-4*6, 6, 0, 4);
-	cdc_decode((char*) test, 4);
-	test[4] = '\0';
-	printf("test: %s\n", test);
-
 	assert(syslbn_data.vol1.vol1 == MAGIC_VOL1);
 	assert(syslbn_data.hdr1.hdr1 == MAGIC_HDR1);
 	assert(syslbn_data.hdr1.dataSetID_1_6 == MAGIC_NCARSY);
