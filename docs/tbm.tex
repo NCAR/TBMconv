@@ -8,6 +8,22 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{cleveref}
+\usepackage{adjustbox}
+\usepackage{listings}
+
+\lstset{
+	tabsize=3,
+	basicstyle=\ttfamily\footnotesize,
+	upquote=\true,
+	columns=fixed,
+	showstringspaces=false,
+	breaklines=true,
+	frame=single,
+	showspaces=false,
+	keywordstyle=\color[rgb]{0,0,1},
+	commentstyle=\color[rgb]{0.13,0.54,0.13},
+	stringstyle=\color[rgb]{0.63,0.13,0.94}
+}
 
 %\usepackage{PTSansNarrow}
 \usepackage[T1]{fontenc}
@@ -914,8 +930,6 @@ The file histoy words immediately follow every file control pointer.
 
 \section{Block Control Pointer (BCP)} \label{Sec.BlockControlPointer}
 
-Note that the way these are depicted in the NCAR Technical Note is rather confusing; the technical note shows what at first appear to be three distinct ``block control pointers," one which is ``word 9", another which is word ``\(+9+M-1\)", and another which is word ``\(+9+M\)". Really what the technical note is trying to convey is that there are \(M\) block control pointers (equal to \texttt{bk}); the first block control pointer starts at an offset \(+9\) after the first file control pointer; and immediately after the last block control pointer (\(+9+M\)) is another file control pointer.
-
 \controlword{
 \rotate{No Rec. Start} &
 \multicolumn{2}{c}{\rotate{Open}} &
@@ -934,6 +948,32 @@ Note that the way these are depicted in the NCAR Technical Note is rather confus
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 }
 \footnotetext{Not mentioned in the NCAR Tech Note, but can be seen referenced on line 96 of the \texttt{as.s} CAL source file for \texttt{tbm2cos}.}
+
+\subsection{Further Remarks}
+
+\subsubsection{Representation in NCAR Technical Note}
+
+Note that the way the block control pointer is depicted in the NCAR Technical Note is rather confusing; the technical note shows what at first appear to be three distinct ``block control pointers," one which is ``word 9", another which is word ``\(+9+M-1\)", and another which is word ``\(+9+M\)". Really what the technical note is trying to convey is that there are \(M\) block control pointers (equal to \texttt{bk}); the first block control pointer starts at an offset \(+9\) after the first file control pointer; and immediately after the last block control pointer (\(+9+M\)) is another file control pointer.
+
+\subsubsection{\texttt{lastRecord}}
+
+\texttt{lastRecord} is the one-based index of the last record to appear in the \(\mathtt{bk} \times 2048\)-sized data block corresponding to a given buffer control pointer. For example, using \texttt{tbmexplore} to view the first three buffer control pointers shows that the ``last record in data block N" for these are 35, 72, and 108.
+
+\begin{lstlisting}[language=]
+          | no record   |          | last record in | words to first pointer
+offset    | starts here | checksum | data block N   | in data block N
+==========+=============+==========+================+========================
+       60 |           0 |     3496 |             35 |                    220
+       61 |           0 |     2517 |             72 |                    365
+       62 |           0 |     2696 |            108 |                    520
+
+\end{lstlisting}
+
+Using \texttt{tbmexplore} to dump the offsets of the data buffer flags containing actual data in the same file, then taking those offsets mod 16384 to show where the offsets cross block boundaries, we can see that the indices of the records at the end of each block correspond to the aforementioned values:
+
+\begin{center}
+\includegraphics{figures/lastrecord/lastrecord.pdf}
+\end{center}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                                     %

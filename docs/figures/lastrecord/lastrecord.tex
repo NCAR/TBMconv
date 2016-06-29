@@ -1,0 +1,54 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\usepackage{adjustbox}
+\usepackage{booktabs}
+\usetikzlibrary{fit}
+
+\renewcommand*\familydefault{\sfdefault}
+
+\begin{document}
+
+\begin{tabular}{rrr}
+Index & \adjustbox{valign=b}{\shortstack[l]{Offset to\\Data Buffer Flag\\(aka ``Record Control Word")}} & Offset mod 16384 \\
+\midrule
+1 & 16412 & 28 \\
+2 & 17743 & 1359 \\
+3 & 18190 & 1806 \\
+\multicolumn{3}{c}{\(\vdots\)} \\
+33 & 31600 & 15216 \\
+34 & 32047 & 15663 \\
+{\tikz[remember picture] \node [inner sep=0pt] (row35a) {35};}
+& 32494 &
+{\tikz[remember picture] \node [inner sep=0pt] (row35b) {16110};} \\
+\midrule
+36 & 32941 & 173 \\
+37 & 33388 & 620 \\
+38 & 33835 & 1067 \\
+\multicolumn{3}{c}{\(\vdots\)} \\
+70 & 48139 & 15371 \\
+71 & 48586 & 15818 \\
+{\tikz[remember picture] \node [inner sep=0pt] (row72a) {72};}
+& 49033 &
+{\tikz[remember picture] \node [inner sep=0pt] (row72b) {16265};}\\
+\midrule
+73 & 49480 & 328 \\
+74 & 49927 & 775 \\
+75 & 50374 & 1222 \\
+\multicolumn{3}{c}{\(\vdots\)} \\
+106 & 64231 & 15079 \\
+107 & 64678 & 15526 \\
+{\tikz[remember picture] \node [inner sep=0pt] (row108a) {108};}
+& 65125 &
+{\tikz[remember picture] \node [inner sep=0pt] (row108b) {15973};} \\
+\midrule
+109 & 65572 & 36 \\
+110 & 66019 & 483 \\
+111 & 66466 & 930 \\
+\end{tabular}
+\begin{tikzpicture}[overlay,remember picture,every node/.style={draw,red,thick,rectangle,rounded corners,inner sep=2pt}]
+\node [fit=(row35a.north west) (row35b.south east)] {};
+\node [fit=(row72a.north west) (row72b.south east)] {};
+\node [fit=(row108a.north west) (row108b.south east)] {};
+\end{tikzpicture}
+
+\end{document}
