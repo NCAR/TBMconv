@@ -15,6 +15,8 @@
 // Rounds up division.
 #define DIV_CEIL(n,d) (((n)-1)/(d)+1)
 
+#define BK_BLOCK_SIZE ((2048*60)/8)
+
 int main(int argc, char **argv)
 {
 	FILE *fp;
@@ -33,6 +35,7 @@ int main(int argc, char **argv)
 	char eofStrLen = strlen(eofStr);
 	uint8_t *eofStart, *decodeBuf;
 	uint8_t tmp[10000];
+	int first;
 
 	if (argc != 3) {
 		fprintf(stderr, "Error: Require exactly two arguments.\n");
@@ -79,6 +82,8 @@ int main(int argc, char **argv)
 	assert(syslbn_data.hdr1.dataSetID_13_16 == MAGIC_1000);
 	assert(syslbn_data.hdr1.dataSetID_17 == MAGIC_1);
 	assert(syslbn_data.hdr2.hdr2 == MAGIC_HDR2);
+	assert(readAmount == (size_t) (syslbn_data.numBKBlocks+1)*
+	                     syslbn_data.bk*BK_BLOCK_SIZE);
 
 	/* The location of the first file control pointer is specified in the
 	 * SYSLBN.
@@ -86,10 +91,16 @@ int main(int argc, char **argv)
 
 	offset = syslbn_data.firstFCPOff * 60;
 
+	first = 1;
 	do {
 		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &fcp, offset%8,
 		                         60, 0, sizeof(FileControlPointer)/8);
 		print_fileControlPtr(&fcp, offset);
+
+		if (first) {
+			assert(fcp.nextFCPOff - 9 == syslbn_data.numBKBlocks);
+			first = 0;
+		}
 
 		// file history word always follows the FCP?
 		gbytes<uint8_t,uint64_t>(inBuf+((offset+60)/8), (uint64_t*) &fhw_data,
