@@ -154,6 +154,7 @@ int main(int argc, char **argv)
 	offset = DATA_START_BIT_OFFSET;
 	size_t writeOffset = 0;
 	memset(decodeBuf, 0, sizeof(uint8_t)*(decodeAmount + 8*numDBF /* approximate */));
+	first = 1;
 	do {
 		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &dbf,
 		                         offset%8, 60, 0,
@@ -162,12 +163,15 @@ int main(int argc, char **argv)
 		gbytes<uint8_t,uint8_t>(inBuf+(offset/8), tmp, offset%8, 8, 0, DIV_CEIL((dbf.nextPtrOffset-1)*60,8));
 		memcpy(decodeBuf+(writeOffset/8), tmp, DIV_CEIL((dbf.nextPtrOffset-1)*60,8));
 		writeOffset += 60*(dbf.nextPtrOffset-1);
-		/* Align writeOffset to 64-bit boundaries */
-		if (!dbf.isEOF && (writeOffset % 64) == 0) {
+		/* Align writeOffset to 64-bit boundaries, but not immediately after
+		 * the GENPRO-I header.
+		 */
+		if (!first && !dbf.isEOF && (writeOffset % 64) == 0) {
 			writeOffset += 64;
 		} else {
 			writeOffset = 64*DIV_CEIL(writeOffset,64);
 		}
+		first = 0;
 		offset += 60*(dbf.nextPtrOffset-1);
 	} while (!dbf.isEOF);
 	fwrite(decodeBuf, sizeof(uint8_t), DIV_CEIL(writeOffset,8), fp);
