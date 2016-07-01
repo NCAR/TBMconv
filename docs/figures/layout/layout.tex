@@ -1,0 +1,107 @@
+\documentclass{standalone}
+\usepackage{multicol}
+\usepackage{tikz}
+\usepackage[lm]{sfmath} % For serif math
+
+\usetikzlibrary{arrows}
+\usetikzlibrary{calc}
+\tikzset{>=latex}
+
+\renewcommand*\familydefault{\sfdefault}
+
+\newcommand{\marker}[1]{{\tikz[remember picture] \node [inner sep=0pt] (#1) {\vphantom{A}};}}
+\newcommand{\membsp}{\hskip 1em}
+
+\begin{document}
+
+\begin{tabular}{r@{\hskip 1em}|l|l}
+\cline{2-2}
+                                                     & SYSLBN & \phantom{padd} \\
+%\cline{2-2}
+                                                     & \membsp VOL1 & \\
+%\cline{2-2}
+                                                     & \membsp HDR1 & \\
+%\cline{2-2}
+                                                     & \membsp HDR2 & \\
+%\cline{2-2}
+                                                     & \membsp \texttt{firstFCPOff} & \marker{firstFCPOff} \\
+\cline{2-2}
+\multicolumn{1}{c}{}                                 & \multicolumn{1}{c}{\(\vdots\)} \\
+\cline{2-2}
+                                                     & First File Control Pointer & \marker{fcp1} \\
+\cline{2-2}
+                                                     & \membsp \texttt{nextFCPOff} & \marker{fcp1next} \\
+\cline{2-2}
+                                                     & File History Words & \\
+\cline{2-2}
+                                                     & Block Control Pointer 1 & \\ 
+\cline{2-2}
+                                                     & Block Control Pointer 2 & \\
+\cline{2-2}
+                                                     & Block Control Pointer 3 & \\
+\cline{2-2}
+\multicolumn{1}{c}{}                                 & \multicolumn{1}{c}{\(\vdots\)} & \\
+\cline{2-2}
+                                                     & Block Control Pointer \texttt{bk} & \\
+\cline{2-2}
+                                                     & File Control Pointer & \marker{fcp2} \\
+%\cline{2-2}
+                                                     & \membsp \texttt{nextFCPOff} & \\
+\cline{2-2}
+                                                     & File History Words & \\
+\cline{2-2}
+\multicolumn{1}{c}{}                                 & \multicolumn{1}{c}{\(\vdots\)} & \\
+\cline{2-2}
+\(2048 \times \texttt{bk} \phantom{\phantom{}+ 00}\) & Data Buffer Flags & \marker{dbf1} \\
+\cline{2-2}
+\(2048 \times \texttt{bk} + \phantom{0}1\)           & VOL1 & \marker{vol1} \\
+\cline{2-2}
+\(2048 \times \texttt{bk} + \phantom{0}9\)           & Data Buffer Flags & \marker{dbf2} \\
+\cline{2-2}
+\(2048 \times \texttt{bk} + 10\)                     & HDR1 & \marker{hdr1} \\
+\cline{2-2}
+\(2048 \times \texttt{bk} + 18\)                     & Data Buffer Flags & \marker{dbf3} \\
+\cline{2-2}
+\(2048 \times \texttt{bk} + 19\)                     & HDR2 & \marker{hdr2} \\
+\cline{2-2}
+\(2048 \times \texttt{bk} + 27\)                     & Data Buffer Flags (\texttt{isEOF = 1)} & \marker{dbf4} \\
+\cline{2-2}
+\(2048 \times \texttt{bk} + 28\)                     & Data Buffer Flags & \marker{dbf5} \\
+                                                     & \membsp \texttt{nextPtrOffset} & \marker{dbf5next} \\
+\cline{2-2}
+\(2048 \times \texttt{bk} + 29\)                     & Raw Data & \marker{dat1} \\
+\cline{2-2}
+\multicolumn{1}{c}{}                                 & \multicolumn{1}{c}{\(\vdots\)} & \\
+\cline{2-2}
+                                                     & Data Buffer Flags & \marker{dbf6} \\
+\cline{2-2}
+                                                     & Raw Data & \\
+\cline{2-2}
+\multicolumn{1}{c}{}                                 & \multicolumn{1}{c}{\(\vdots\)} & \\
+\cline{2-2}
+                                                     & Data Buffer Flags (\(\mathtt{isEOF = 1}\)) & \\
+\cline{2-2}
+\end{tabular}
+\begin{tikzpicture}[overlay,remember picture]
+\foreach \a/\b in {firstFCPOff/fcp1, fcp1next/fcp2, dbf5next/dbf6}
+{
+	\draw [->] (\a.east) -- ++(right:0.3cm) |- (\b.east);
+}
+
+\foreach \a/\b/\delta in {dbf1/vol1/1,
+                          vol1/dbf2/8,
+                          dbf2/hdr1/1,
+                          hdr1/dbf3/8,
+                          dbf3/hdr2/1,
+                          hdr2/dbf4/8,
+                          dbf4/dbf5/1}%,
+                          %dbf5/dat1/1}
+{
+\draw let \p1 = ($(\a.east)-(\b.east)$) in
+      (\a.east) arc (90:-90:{0.5*veclen(\x1,\y1)-1.5pt})
+      node [midway,anchor=west] {\(+\delta\)};
+\draw [<-] (\b.east) ++(-3pt,2pt) -- ++(1pt,0.3pt);
+}
+\end{tikzpicture}
+
+\end{document}

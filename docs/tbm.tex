@@ -77,6 +77,13 @@ Length & \multicolumn{1}{l}{Bits} & Type & API & Description \\
 
 \chapter{Overview}
 
+\begin{figure}
+	\centering
+	\includegraphics{figures/layout/layout.pdf}
+	\caption{Illustration of the general TBM file layout.}
+	\label{Fig.TBMLayout}
+\end{figure}
+
 Bits 59--30 of word~29 (``offset to first file control pointer"; \texttt{firstFCPOff} in the API) of the SYSLBN block (which begins at offset 0) specify the offset, in 60-bit words, from the start of the file (offset 0) to the first file control pointer (see \cref{Sec.FileControlPointer}). Each file control pointer is followed by a set of file history words (see \cref{Sec.FileHistoryWords}). After the first set of file history words (which immediately follow the first file control pointer), and up to the second file control pointer is where a series of block control pointers (see \cref{Sec.BlockControlPointer}) reside. Each block control pointer is one 60-bit word in length, and there are \texttt{numBKBlocks} of them; as there are this many, one should find the following equivalencies:
 
 \begin{align*}
