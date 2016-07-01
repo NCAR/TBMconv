@@ -57,6 +57,27 @@
 \end{center}}
 }
 
+\newcommand{\controlwordc}[2]{
+{\scriptsize
+%\sfdefault
+\setlength{\tabcolsep}{0.7pt}
+\begin{center}
+\begin{tabular}{|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|C|}
+\hline
+59 & 58 & 57 & 56 & 55 & 54 & 53 & 52 & 51 & 50 &
+49 & 48 & 47 & 46 & 45 & 44 & 43 & 42 & 41 & 40 &
+39 & 38 & 37 & 36 & 35 & 34 & 33 & 32 & 31 & 30 &
+29 & 28 & 27 & 26 & 25 & 24 & 23 & 22 & 21 & 20 &
+19 & 18 & 17 & 16 & 15 & 11 & 13 & 12 & 11 & 10 &
+ 9 &  8 &  7 &  6 &  5 &  4 &  3 &  2 &  1 &  0 \\
+#1 \\
+& & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & \\
+\hline \multicolumn{1}{c}{} \\
+#2 \\
+\end{tabular}
+\end{center}}
+}
+
 \newcommand{\controlworddesc}[1]{
 \begin{center}
 \begin{tabular}[t]{rrlTp{8.0cm}}
@@ -430,7 +451,7 @@ This word is unused and should be set to zero.
 
 This word marks the beginning of the ``header one label," which is 80 6-bit characters long.
 
-\controlword{
+\controlwordc{
 \multicolumn{6}{|c|}{H} &
 \multicolumn{6}{c|}{D} &
 \multicolumn{6}{c|}{R} &
@@ -441,6 +462,17 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{4}\)\\ R}} &
 \multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{5}\)\\ S}} &
 \multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{6}\)\\ Y}}
+}{
+\multicolumn{6}{c}{1} &
+\multicolumn{6}{c}{2} &
+\multicolumn{6}{c}{3} &
+\multicolumn{6}{c}{4} &
+\multicolumn{6}{c}{5} &
+\multicolumn{6}{c}{6} &
+\multicolumn{6}{c}{7} &
+\multicolumn{6}{c}{8} &
+\multicolumn{6}{c}{9} &
+\multicolumn{6}{c}{10}
 }
 
 \controlworddesc{
@@ -454,7 +486,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 
 \subsection{SYSLBN Word 13 (HDR1 Word 1)}
 
-\controlword{
+\controlwordc{
 \multicolumn{6}{|c|}{\shortstack[c]{\(\text{ID}_{7}\)\\ S}} &
 \multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{8}\)\\ T}} &
 \multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{9}\)\\ E}} &
@@ -465,6 +497,17 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{14}\)\\ 0}} &
 \multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{15}\)\\ 0}} &
 \multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{16}\)\\ 0}}
+}{
+\multicolumn{6}{c}{11} &
+\multicolumn{6}{c}{12} &
+\multicolumn{6}{c}{13} &
+\multicolumn{6}{c}{14} &
+\multicolumn{6}{c}{15} &
+\multicolumn{6}{c}{16} &
+\multicolumn{6}{c}{17} &
+\multicolumn{6}{c}{18} &
+\multicolumn{6}{c}{19} &
+\multicolumn{6}{c}{20}
 }
 
 \controlworddesc{
@@ -478,7 +521,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 
 \subsection{SYSLBN Word 14 (HDR1 Word 2)}
 
-\controlword{
+\controlwordc{
 \multicolumn{6}{|c|}{\shortstack[c]{\(\text{ID}_{17}\)\\ 1}} &
 \multicolumn{6}{c|}{\(\text{VSN}_{1}\)} &
 \multicolumn{6}{c|}{\(\text{VSN}_{2}\)} &
@@ -489,6 +532,17 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\(\text{FSN}_{1}\)} &
 \multicolumn{6}{c|}{\(\text{FSN}_{2}\)} &
 \multicolumn{6}{c|}{\(\text{FSN}_{3}\)}
+}{
+\multicolumn{6}{c}{21} &
+\multicolumn{6}{c}{22} &
+\multicolumn{6}{c}{23} &
+\multicolumn{6}{c}{24} &
+\multicolumn{6}{c}{25} &
+\multicolumn{6}{c}{26} &
+\multicolumn{6}{c}{27} &
+\multicolumn{6}{c}{28} &
+\multicolumn{6}{c}{29} &
+\multicolumn{6}{c}{30}
 }
 
 \controlworddesc{
@@ -503,7 +557,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 
 \subsection{SYSLBN Word 15 (HDR1 Word 3)}
 
-\controlword{
+\controlwordc{
 \multicolumn{6}{|c|}{\(\text{FSN}_{4}\)} &
 \multicolumn{6}{c|}{\(\text{FQN}_{1}\)} &
 \multicolumn{6}{c|}{\(\text{FQN}_{2}\)} &
@@ -514,6 +568,17 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\(\text{FSN}_{3}\)} &
 \multicolumn{6}{c|}{\(\text{FSN}_{4}\)} &
 \multicolumn{6}{c|}{\(\text{VN}_{1}\)}
+}{
+\multicolumn{6}{c}{31} &
+\multicolumn{6}{c}{32} &
+\multicolumn{6}{c}{33} &
+\multicolumn{6}{c}{34} &
+\multicolumn{6}{c}{35} &
+\multicolumn{6}{c}{36} &
+\multicolumn{6}{c}{37} &
+\multicolumn{6}{c}{38} &
+\multicolumn{6}{c}{39} &
+\multicolumn{6}{c}{40}
 }
 
 \controlworddesc{
@@ -529,7 +594,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 
 \subsection{SYSLBN Word 16 (HDR1 Word 4)}
 
-\controlword{
+\controlwordc{
 \multicolumn{6}{|c|}{\(\text{VN}_{2}\)} &
 \multicolumn{6}{c|}{\(\text{CD}_{1}\)} &
 \multicolumn{6}{c|}{\(\text{CD}_{2}\)} &
@@ -540,6 +605,17 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\(\text{ED}_{1}\)} &
 \multicolumn{6}{c|}{\(\text{ED}_{2}\)} &
 \multicolumn{6}{c|}{\(\text{ED}_{3}\)}
+}{
+\multicolumn{6}{c}{41} &
+\multicolumn{6}{c}{42} &
+\multicolumn{6}{c}{43} &
+\multicolumn{6}{c}{44} &
+\multicolumn{6}{c}{45} &
+\multicolumn{6}{c}{46} &
+\multicolumn{6}{c}{47} &
+\multicolumn{6}{c}{48} &
+\multicolumn{6}{c}{49} &
+\multicolumn{6}{c}{50}
 }
 
 \controlworddesc{
@@ -554,7 +630,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 
 \subsection{SYSLBN Word 17 (HDR1 Word 5)}
 
-\controlword{
+\controlwordc{
 \multicolumn{6}{|c|}{\(\text{ED}_{4}\)} &
 \multicolumn{6}{c|}{\(\text{ED}_{5}\)} &
 \multicolumn{6}{c|}{\(\text{ED}_{6}\)} &
@@ -565,6 +641,17 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\(\text{BC}_{4}\)} &
 \multicolumn{6}{c|}{\(\text{BC}_{5}\)} &
 \multicolumn{6}{c|}{\(\text{BC}_{6}\)}
+}{
+\multicolumn{6}{c}{51} &
+\multicolumn{6}{c}{52} &
+\multicolumn{6}{c}{53} &
+\multicolumn{6}{c}{54} &
+\multicolumn{6}{c}{55} &
+\multicolumn{6}{c}{56} &
+\multicolumn{6}{c}{57} &
+\multicolumn{6}{c}{58} &
+\multicolumn{6}{c}{59} &
+\multicolumn{6}{c}{60}
 }
 
 \controlworddesc{
@@ -579,7 +666,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 
 \subsection{SYSLBN Word 18 (HDR1 Word 6)}
 
-\controlword{
+\controlwordc{
 \multicolumn{6}{|c|}{\(\text{SC}_{1}\)} &
 \multicolumn{6}{c|}{\(\text{SC}_{2}\)} &
 \multicolumn{6}{c|}{\(\text{SC}_{3}\)} &
@@ -590,6 +677,17 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{\(\text{SC}_{8}\)} &
 \multicolumn{6}{c|}{\(\text{SC}_{9}\)} &
 \multicolumn{6}{c|}{\(\text{SC}_{10}\)}
+}{
+\multicolumn{6}{c}{61} &
+\multicolumn{6}{c}{62} &
+\multicolumn{6}{c}{63} &
+\multicolumn{6}{c}{64} &
+\multicolumn{6}{c}{65} &
+\multicolumn{6}{c}{66} &
+\multicolumn{6}{c}{67} &
+\multicolumn{6}{c}{68} &
+\multicolumn{6}{c}{69} &
+\multicolumn{6}{c}{70}
 }
 
 \controlworddesc{
@@ -602,7 +700,7 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 
 \subsection{SYSLBN Word 19 (HDR1 Word 7)}
 
-\controlword{
+\controlwordc{
 \multicolumn{6}{|c|}{\(\text{SC}_{11}\)} &
 \multicolumn{6}{c|}{\(\text{SC}_{12}\)} &
 \multicolumn{6}{c|}{\(\text{SC}_{13}\)} &
@@ -613,6 +711,17 @@ This word marks the beginning of the ``header one label," which is 80 6-bit char
 \multicolumn{6}{c|}{--} &
 \multicolumn{6}{c|}{--} &
 \multicolumn{6}{c|}{--}
+}{
+\multicolumn{6}{c}{71} &
+\multicolumn{6}{c}{72} &
+\multicolumn{6}{c}{73} &
+\multicolumn{6}{c}{74} &
+\multicolumn{6}{c}{75} &
+\multicolumn{6}{c}{76} &
+\multicolumn{6}{c}{77} &
+\multicolumn{6}{c}{78} &
+\multicolumn{6}{c}{79} &
+\multicolumn{6}{c}{80}
 }
 
 \controlworddesc{
