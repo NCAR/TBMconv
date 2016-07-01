@@ -11,6 +11,8 @@
 \usepackage{adjustbox}
 \usepackage{listings}
 
+\usetikzlibrary{fit}
+
 \lstset{
 	tabsize=3,
 	basicstyle=\ttfamily\footnotesize,
@@ -1218,7 +1220,37 @@ Also known as the ``record control word" or the ``data buffer field."
 
 \section{First End-Of-File Label (EOF1)}
 
-Note that characters 5--54 and 61--80 of EOF1 are the same as those of HDR1.
+All of the characters in EOF1 correspond directly to those in HDR1, but only characters 5--54 and 61--80 of EOF1 will have the (exact) same values as those of HDR1 in a given file; characters 55-60 contain the block count, which changes between HDR1 and EOF1. Characters 1--4 change from \texttt{HDR1} to \texttt{EOF1}, so only the first word (word 0) of EOF1 is shown.
+
+For comparison, consider the HDR1 and EOF1 at the offsets shown in the table below from the CODE-II file \texttt{G51452}:
+
+\begin{center}
+\begin{tabular}{lll}
+Field                       & HDR1 Value                          & EOF1 Value \\
+\midrule
+Offset\footnotemark         & 16394                               & 5050071 \\
+\texttt{hdr1}/\texttt{eof1} & \texttt{"HDR1"} (\texttt{0x20449C}) & \texttt{"EOF1"} (\texttt{0x14F19C}) \\
+\texttt{dataSetID}          & \texttt{"NCARSYSTEMHD10001"}        & \texttt{"NCARSYSTEMHD10001"} \\
+\texttt{volSerialName2}     & \texttt{"G51452"}                   & \texttt{"G51452"} \\
+\texttt{fileSecNum}         & \texttt{"0001"}                     & \texttt{"0001"} \\
+\texttt{fileSeqNum}         & \texttt{"0001"}                     & \texttt{"0001"} \\
+\texttt{generationNum}      & \texttt{"0001"}                     & \texttt{"0001"} \\
+\texttt{versionNum}         & \texttt{"00"}                       & \texttt{"00"} \\
+\texttt{creationDate}       & \texttt{" 82320"}                   & \texttt{" 82320"} \\
+\texttt{expDate}            & \texttt{" 83320"}                   & \texttt{" 83320"} \\
+\texttt{accChar}            & \texttt{" "} (\texttt{0x2D})        & \texttt{" "} (\texttt{0x2D}) \\
+{\tikz[remember picture] \node [inner sep=0pt] (bca) {\texttt{blockCount}};} &
+\texttt{"000000"} &
+{\tikz[remember picture] \node [inner sep=0pt] (bcb) {\texttt{"011259"}};} \\
+\texttt{sysCode}           & \texttt{"NCAR   SYSTEM"}            & \texttt{"NCAR   SYSTEM"}
+\end{tabular}
+\begin{tikzpicture}[overlay,remember picture,every node/.style={draw,red,thick,rectangle,rounded corners,inner sep=2pt}]
+\node [fit=(bca.north west) (bcb.south east)] {};
+\end{tikzpicture}
+\footnotetext{``Offset" here is not a field in HDR1 or EOF1, but rather the offset in the file to the start of each of these sequences.}
+\end{center}
+
+Observe that the block count changes from 0 to 11259; in this file, there are 11259 records between HDR1 and EOF1.
 
 \subsection{EOF1 Word 0}
 
@@ -1227,13 +1259,18 @@ Note that characters 5--54 and 61--80 of EOF1 are the same as those of HDR1.
 \multicolumn{6}{c|}{O} &
 \multicolumn{6}{c|}{F} &
 \multicolumn{6}{c|}{1} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{1}\)\\ N}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{2}\)\\ C}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{3}\)\\ A}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{4}\)\\ R}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{5}\)\\ S}} &
+\multicolumn{6}{c|}{\shortstack[c]{\(\text{ID}_{6}\)\\ Y}}
 }
 
 \controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-18 & 59-42 & \\
- 6 & 41-46 & \\
- 6 & & \\
+18 & 59--42 & & & \\
+42 & 41--0  & & & Same as in HDR1. \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 }
 
