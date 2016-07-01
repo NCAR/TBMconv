@@ -136,6 +136,80 @@ For example, for the default \texttt{bk} value of \(8\),
 	\text{length}_\text{64-bit words} &= \dfrac{2048 \times 8 \times 60}{64} = 15360 \text{ 64-bit words} \mathrm{.}
 \end{align*}
 
+\chapter{Using \texttt{tbmexplore}}
+
+\begin{lstlisting}[language=]
+$ tbmexplore G51452
+Enter an offset: 
+\end{lstlisting}
+
+\noindent We enter \texttt{0} and press enter, and are next prompted with:
+
+\begin{lstlisting}[language=]
+How would you like to display the data?
+
+         1) 6-bit DPC
+         2) Data Buffer Flags (aka ``Record Control Word")
+         3) Block Control Pointer
+         4) File Control Pointer
+         5) File History Word
+         6) SYSLBN
+         7) NotQuiteSYSLBN
+         8) VOL1
+         9) HDR1
+        10) HDR2
+        11) 20-bit integers
+        12) 60-bit integers
+
+Enter a choice [1-12]: 
+\end{lstlisting}
+
+\noindent Choosing \texttt{6}, we see
+
+\begin{lstlisting}[language=]
+ ==== SYSLBN ====
+offset = 0 (bits) 0+0 (8-bit bytes) 0+0 (60-bit words)
+machineType        =       0 (CDC 7600)
+density            =       0 (200 BPI)
+dataType           =       0 (BCD as DPC)
+numTracks          =       1
+bk                 =       8
+numBKBlocks        =     308
+labelBufLen        =    1024
+ ===== VOL1 =====
+vol1               = "VOL1" (0x58F31C)
+volSerialName1     = "G51452"
+acc                = " " (45; unlimited access)
+acntNum            = "41113306" (0x01F71C1C79E6E1)
+sciNum             = "5&" (0x837)
+tbmVolSerial       = "TL0483" (0x50C6DF8DE)
+sysLevelCode       = " " (0x2D)
+ ===== HDR1 =====
+hdr1               = "HDR1" (0x20449C)
+dataSetID          = "NCARSYSTEMHD10001"
+volSerialName2     = "G51452"
+fileSecNum         = "0001"
+fileSeqNum         = "0001"
+generationNum      = "0001"
+versionNum         = "00"
+creationDate       = " 82320"
+expDate            = " 83320"
+accChar            = " " (0x2D)
+blockCount         = "000000"
+sysCode            = "NCAR   SYSTEM"
+ ===== HDR2 =====
+hdr2               = "HDR2" (0x20449D)
+hdr2label          = "                                                                            "
+ ==== SYSLBN ====
+fileCtrlPtrOff     =     0 ("     ")
+blkCtrlPtrOff      =     0 ("     ")
+firstFCPOff        =    51 ("    %")
+ctrlCardOpenOff    =    35 ("    8")
+openMergeAreaOff   =    35 ("    8")
+curCtrlCardOpenOff =    35 ("    8")
+fcpToBlkCtrlOff    =    10 ("    J")
+\end{lstlisting}
+
 \chapter{Reference}
 
 \section{Accessability critera} \label{Sec.AccessibilityCriteria}
