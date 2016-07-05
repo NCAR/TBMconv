@@ -90,8 +90,14 @@ int main(int argc, char **argv)
 //	assert(syslbn_data.hdr2 == MAGIC_HDR2);
 
 	while (1) {
-		fprintf(stderr, "Enter an offset: ");
+		fprintf(stderr, "Enter an offset or type `quit': ");
 		getline(&responseText, &responseTextLen, stdin);
+		if ((s = strchr(responseText, '\n'))) {
+			*s = '\0';
+		}
+		if (!strncmp(responseText, "quit", responseTextLen)) {
+			break;
+		}
 		offset = atoi(responseText);
 		if (offset == 0) goto getDisplay;
 
