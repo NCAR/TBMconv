@@ -26,8 +26,6 @@ int main(int argc, char **argv)
 	char *inFileName;
 	SYSLBN_Data syslbn_data;
 	SYSLBN_Text syslbn_text;
-	NotQuiteSYSLBN_Data nqsyslbn_data;
-	NotQuiteSYSLBN_Text nqsyslbn_text;
 	uint8_t *inBuf;
 	size_t readAmount;
 	BlockControlPointer bcp;
@@ -140,14 +138,13 @@ getDisplay:
 		        "\t 4) File Control Pointer\n"
 		        "\t 5) File History Word\n"
 		        "\t 6) SYSLBN\n"
-		        "\t 7) NotQuiteSYSLBN\n"
-		        "\t 8) VOL1\n"
-		        "\t 9) HDR1\n"
-		        "\t10) HDR2\n"
-		        "\t11) 20-bit integers\n"
-		        "\t12) 60-bit integers\n"
+		        "\t 7) VOL1\n"
+		        "\t 8) HDR1\n"
+		        "\t 9) HDR2\n"
+		        "\t10) 20-bit integers\n"
+		        "\t11) 60-bit integers\n"
 		        "\n"
-		        "Enter a choice [1-12]: ");
+		        "Enter a choice [1-11]: ");
 				
 		getline(&responseText, &responseTextLen, stdin);
 		responseValue = atoi(responseText);
@@ -255,17 +252,7 @@ getDisplay:
 				                         60, 0, sizeof(SYSLBN_Data)/8);
 				print_syslbn(&syslbn_text, &syslbn_data, offset);
 				break;
-			case 7: /* NotQuiteSYSLBN */
-				gbytes<uint8_t,uint8_t>(inBuf+(offset/8),
-				                        (uint8_t*) &nqsyslbn_text, offset%8,
-				                        6, 0, sizeof(NotQuiteSYSLBN_Text));
-				cdc_decode((char*) &nqsyslbn_text, sizeof(SYSLBN_Text));
-				gbytes<uint8_t,uint64_t>(inBuf+(offset/8),
-				                         (uint64_t*) &nqsyslbn_data, offset%8,
-				                         60, 0, sizeof(NotQuiteSYSLBN_Data)/8);
-				print_nqsyslbn(&nqsyslbn_text, &nqsyslbn_data, offset);
-				break;
-			case 8: /* VOL1 */
+			case 7: /* VOL1 */
 				gbytes<uint8_t,uint8_t>(inBuf+(offset/8),
 				                        (uint8_t*) &(syslbn_text.vol1), offset%8,
 				                        6, 0, sizeof(HDR1_Text));
@@ -275,7 +262,7 @@ getDisplay:
 				                         60, 0, sizeof(HDR1_Data)/8);
 				print_vol1(&(syslbn_text.vol1), &(syslbn_data.vol1), offset);
 				break;
-			case 9: /* HDR1 */
+			case 8: /* HDR1 */
 				gbytes<uint8_t,uint8_t>(inBuf+(offset/8),
 				                        (uint8_t*) &(syslbn_text.hdr1), offset%8,
 				                        6, 0, sizeof(HDR1_Text));
@@ -285,7 +272,7 @@ getDisplay:
 				                         60, 0, sizeof(HDR1_Data)/8);
 				print_hdr1(&(syslbn_text.hdr1), &(syslbn_data.hdr1), offset);
 				break;
-			case 10: /* HDR2 */
+			case 9: /* HDR2 */
 				gbytes<uint8_t,uint8_t>(inBuf+(offset/8),
 				                        (uint8_t*) &(syslbn_text.hdr2), offset%8,
 				                        6, 0, sizeof(HDR1_Text));
@@ -295,7 +282,7 @@ getDisplay:
 				                         60, 0, sizeof(HDR1_Data)/8);
 				print_hdr2(&(syslbn_text.hdr2), &(syslbn_data.hdr2), offset);
 				break;
-			case 11: /* 20-bit integers */
+			case 10: /* 20-bit integers */
 				while (1) {
 					fprintf(stderr, "How many values? [1-%ld] ",
 					        (readAmount*8)/20);
@@ -317,7 +304,7 @@ getDisplay:
 					fputc('\n', stdout);
 				}
 				break;
-			case 12: /* 20-bit integers */
+			case 11: /* 20-bit integers */
 				while (1) {
 					fprintf(stderr, "How many values? [1-%ld] ",
 					        (readAmount*8)/20);

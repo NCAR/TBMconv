@@ -78,15 +78,6 @@ printf(
 #define GET_REL_OFFSET(baseOff, baseMemb, memb) \
 	baseOff + (( (char*) &(baseMemb->memb) - (char*) &(baseMemb) )/8)*60
 
-void print_nqsyslbn(NotQuiteSYSLBN_Text const*const text,
-                    NotQuiteSYSLBN_Data const*const data,
-                    const size_t offset)
-{
-print_vol1(&(text->vol1), &(data->vol1), GET_REL_OFFSET(offset, data, vol1));
-print_hdr1(&(text->hdr1), &(data->hdr1), GET_REL_OFFSET(offset, data, hdr1));
-print_hdr2(&(text->hdr2), &(data->hdr2), GET_REL_OFFSET(offset, data, hdr2));
-}
-
 void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data,
                   const size_t offset)
 {

@@ -259,16 +259,6 @@ typedef struct {
               uint64_t /* padding */      :  0;
 } SYSLBN_Data;
 
-typedef struct __attribute__((packed)) {
-	uint64_t padding1[4];
-/* Words  4-11 */ VOL1_Data vol1;
-	uint64_t padding2;
-/* Words 13-20 */ HDR1_Data hdr1;
-	uint64_t padding3;
-/* Words 20-27 */ HDR2_Data hdr2;
-	uint64_t padding4[2];
-} NotQuiteSYSLBN_Data;
-
 typedef struct {
 /* Word      4 */ char vol1[4];               /** Should read "VOL1" */
 /* Word      4 */ char volSerialName1[6];     /** Volume serial name */
@@ -331,16 +321,6 @@ HDR2_Text hdr2;
 /* Word     31 */ char padding6[5];
 /* Word     31 */ char fcpToBlkCtrlOff[5];    /** Offset from file control pointer to first block control pointer */
 } SYSLBN_Text;
-
-typedef struct __attribute__((packed)) {
-char padding1[40];
-VOL1_Text vol1;
-char padding2[10];
-HDR1_Text hdr1;
-char padding3[10];
-HDR2_Text hdr2;
-char padding4[20];
-} NotQuiteSYSLBN_Text;
 
 /** File Control Pointer ("FCP") */
 typedef struct {
@@ -460,9 +440,6 @@ void print_hdr2(HDR2_Text const*const text, HDR2_Data const*const data,
 
 void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data,
                   const size_t offset);
-void print_nqsyslbn(NotQuiteSYSLBN_Text const*const text,
-                    NotQuiteSYSLBN_Data const*const data,
-                    const size_t offset);
 void print_fileControlPtr(FileControlPointer const*const fcp,
                           const size_t offset);
 void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
