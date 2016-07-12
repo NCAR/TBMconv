@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 	do {
 		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &fcp, offset%8,
 		                         60, 0, sizeof(FileControlPointer)/8);
-		print_fileControlPtr(&fcp, offset);
+		print_fileControlPtr(&fcp, offset, 0, 0);
 
 		if (first) {
 			assert(fcp.nextFCPOff - 9 == syslbn_data.numBKBlocks);

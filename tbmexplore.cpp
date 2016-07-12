@@ -49,6 +49,7 @@
 #define LINE_LENGTH 100
 
 void print_bin(uint64_t bin, unsigned numDigits);
+int prompt_yesno(const char prompt[]);
 
 int main(int argc, char **argv)
 {
@@ -209,22 +210,7 @@ getDisplay:
 				}
 				break;
 			case 2: /* Data Buffer Flag */
-				while (1) {
-					fprintf(stderr, "Follow Data Buffer Flags until EOF? [yn] ");
-					getline(&responseText, &responseTextLen, stdin);
-					if ((s = strchr(responseText, '\n'))) {
-						*s = '\0';
-					}
-					if (!strcmp(responseText, "n")) {
-						responseValue = 0;
-						break;
-					} else if (!strcmp(responseText, "y")) {
-						responseValue = 1;
-						break;
-					}
-					// fall through
-					fprintf(stderr, "Invalid response!\n");
-				}
+				responseValue = prompt_yesno("Follow Data Buffer Flags until EOF?");
 				first = 1;
 				do {
 					gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &dbf,
@@ -256,10 +242,16 @@ getDisplay:
 				}
 				break;
 			case 4: /* File Control Pointer */
-				gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &fcp,
-				                         offset%8, 60, 0,
-				                         sizeof(FileControlPointer)/8);
-				print_fileControlPtr(&fcp, offset);
+				responseValue = prompt_yesno("Follow File Control Pointers until EOF?");
+				first = 1;
+				do {
+					gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &fcp,
+					                         offset%8, 60, 0,
+					                         sizeof(FileControlPointer)/8);
+					print_fileControlPtr(&fcp, offset, responseValue, first);
+					offset += fcp.nextFCPOff*60;
+					first = 0;
+				} while (responseValue && !fcp.isEOF);
 				break;
 			case 5: /* File History Word */
 				gbytes<uint8_t,uint64_t>(inBuf+(offset/8),
@@ -426,4 +418,33 @@ void print_bin(uint64_t bin, unsigned numDigits)
 		i--;
 		fputc(((bin >> i) & 1) + '0', stdout);
 	}
+}
+
+int prompt_yesno(const char prompt[])
+{
+	int responseValue;
+	char *responseText = NULL;
+	size_t responseTextLen = 0;
+	char *s;
+
+	while (1) {
+		fprintf(stderr, "%s [yn] ", prompt);
+		getline(&responseText, &responseTextLen, stdin);
+		if ((s = strchr(responseText, '\n'))) {
+			*s = '\0';
+		}
+		if (!strcmp(responseText, "n")) {
+			responseValue = 0;
+			break;
+		} else if (!strcmp(responseText, "y")) {
+			responseValue = 1;
+			break;
+		}
+		// fall through
+		fprintf(stderr, "Invalid response!\n");
+	}
+
+	free(responseText);
+
+	return responseValue;
 }

@@ -472,7 +472,8 @@ void print_hdr2(HDR2_Text const*const text, HDR2_Data const*const data,
 void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data,
                   const size_t offset);
 void print_fileControlPtr(FileControlPointer const*const fcp,
-                          const size_t offset);
+                          const size_t offset, const int printHorizontal,
+                          const int printHeader);
 void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
                            FileHistoryWord_Data const*const fhw_data,
                            const size_t offset);

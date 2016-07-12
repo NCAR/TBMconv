@@ -155,8 +155,30 @@ data->fcpToBlkCtrlOff,    5, text->fcpToBlkCtrlOff
 }
 
 void print_fileControlPtr(FileControlPointer const*const fcp,
-                          const size_t offset)
+                          const size_t offset, const int printHorizontal,
+                          const int printHeader)
 {
+if (printHorizontal) {
+if (printHeader) {
+printf(
+"          | offset to | data blk | buffer ptr | file | file        | 2nd  | is        | is   \n"
+"offset    | next FCP  | number   | offset     | type | disposition | type | obsolete? | EOF? \n"
+"==========+===========+==========+============+======+=============+======+===========+======\n"
+);
+}
+printf(
+"%9ld | %9ld | %8ld | %10ld | %4ld | %11ld | %4ld | %9ld | %4ld\n",
+offset/60,
+fcp->nextFCPOff,
+fcp->dataBlkNum,
+fcp->bufferPtrOffset,
+fcp->fileType,
+fcp->fileDisposition,
+fcp->secondaryFileType,
+fcp->isObsolete,
+fcp->isEOF
+);
+} else {
 printf("=== File Control Pointer ===\n");
 print_offset(offset);
 printf(
@@ -180,6 +202,7 @@ fcp->secondaryFileType, fcp->secondaryFileType <= SECONDARY_FILE_TYPE_MAX ?
 fcp->isObsolete,
 fcp->isEOF
 );
+}
 }
 
 void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
