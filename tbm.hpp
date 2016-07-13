@@ -38,7 +38,11 @@
 #ifndef TBM_H
 #define TBM_H
 
-#define SYSLBN_COMPRESSED_LENGTH
+// Rounds up division.
+#define DIV_CEIL(n,d) (((n)-1)/(d)+1)
+
+#define BK_BLOCK_SIZE_CDC_WORDS 2048
+#define BK_BLOCK_SIZE_BYTES ((BK_BLOCK_SIZE_CDC_WORDS*60)/8)
 
 typedef struct {
 	char *str;
@@ -96,13 +100,17 @@ const Label dataTypes[] = {
 };
 
 /* Magic numbers for SYSLBN */
-#define MAGIC_HDR1   0x20449C
-#define MAGIC_HDR2   0x20449D
-#define MAGIC_VOL1   0x58F31C
-#define MAGIC_NCARSY 0x3830524D9
-#define MAGIC_STEMHD 0x4D414D204
-#define MAGIC_1000   0x71B6DB
-#define MAGIC_1      0x1C
+#define MAGIC_HDR1        0x20449C
+#define MAGIC_HDR2        0x20449D
+#define MAGIC_VOL1        0x58F31C
+#define MAGIC_EOF1        005170634 /* octal */
+#define MAGIC_NCARSY      0x3830524D9
+#define MAGIC_STEMHD      0x4D414D204
+#define MAGIC_1000        0x71B6DB
+#define MAGIC_1           0x1C
+/* Note: The leading zero on these literals means that these are octal numbers. */
+#define MAGIC_SYSCODE_1_10  016030122555555233123 // "NCAR   SYS"
+#define MAGIC_SYSCODE_11_13 0240515               // "TEM"
 
 /* File control pointer bits 57-55 */
 #define SECONDARY_FILE_TYPE_OLD     1
@@ -461,6 +469,60 @@ typedef struct {
               uint64_t isRecordStart              :  1; /** "Start of record" */
               uint64_t /* padding */              :  0;
 } DataBufferFlags;
+
+/**
+ * Representation of a file contained within a TBM archive. (There may be more
+ * than one file contained in one TBM archive.) This does *not* directly map
+ * to the organization of data contained in an actual TBM archive.
+ */
+typedef struct {
+	size_t size;
+	HDR1_Text hdr1_text;
+	HDR1_Data hdr1_data;
+	HDR2_Text hdr2_text;
+	HDR2_Data hdr2_data;
+	HDR1_Text eof1_text;
+	HDR1_Data eof1_data;
+	size_t offsetToDataStart; /** Offset to where data (NOT the header) begins */
+} TBMFile;
+
+/**
+ * Representation of a TBM archive, containing one or more TBM files. Note that
+ * this structure does *not* directly map to the organization of data contained
+ * in an actual TBM archive.
+ */
+typedef struct {
+	SYSLBN_Text syslbn_text;
+	SYSLBN_Data syslbn_data;
+	TBMFile *files;
+} TBMArchive;
+
+void tbm_read(uint8_t *const inBuf, const uint64_t bk, TBMFile *const files, int numFiles);
+
+void read_syslbn(uint8_t const*const inBuf, SYSLBN_Text *const text,
+                 SYSLBN_Data *const data, const size_t offset);
+void read_fileHistoryWord(uint8_t const*const inBuf,
+                          FileHistoryWord_Text *const text,
+                          FileHistoryWord_Data *const data,
+                          const size_t offset);
+void read_dataBufferFlags(uint8_t const*const inBuf,
+                          DataBufferFlags *const dbf,
+                          const size_t offset);
+void read_fileControlPointer(uint8_t const*const inBuf,
+                             FileControlPointer *const fcp,
+                             const size_t offset);
+void read_vol1(uint8_t const*const inBuf,
+               VOL1_Text *const text,
+               VOL1_Data *const data,
+               const size_t offset);
+void read_hdr1(uint8_t const*const inBuf,
+               HDR1_Text *const text,
+               HDR1_Data *const data,
+               const size_t offset);
+void read_hdr2(uint8_t const*const inBuf,
+               HDR2_Text *const text,
+               HDR2_Data *const data,
+               const size_t offset);
 
 void print_vol1(VOL1_Text const*const text, VOL1_Data const*const data,
                 const size_t offset);

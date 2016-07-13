@@ -43,69 +43,76 @@
 #include "cdc.hpp"
 #include "tbm.hpp"
 
-// Rounds up division.
-#define DIV_CEIL(n,d) (((n)-1)/(d)+1)
-
-#define BK_BLOCK_SIZE ((2048*60)/8)
+#define OUT_FILE_NAME_LEN 100
 
 int main(int argc, char **argv)
 {
-	FILE *fp;
-	char *inFileName;
-	char *outFileName;
 	SYSLBN_Data syslbn_data;
 	SYSLBN_Text syslbn_text;
-	uint8_t *inBuf;
-	size_t readAmount;
 	FileHistoryWord_Data fhw_data;
 	FileHistoryWord_Text fhw_text;
 	FileControlPointer fcp;
-	size_t offset, decodeAmount;
 	DataBufferFlags dbf;
-	char eofStr[] = "EOF1NCARSYSTEMHD";
-	char eofStrLen = strlen(eofStr);
-	uint8_t *eofStart, *decodeBuf;
-	uint8_t tmp[10000];
-	int first;
+	FILE *fp;                       /* Handle to the input/output files. */
+	char *inFileName;               /* Name of the input file. */
+	char outFileName[OUT_FILE_NAME_LEN]; /* Name of the output file. */
+	char *outFileNameFormatStr;     /* */
+	uint8_t *inBuf;                 /* */
+	size_t fileSize;                /* */
+	size_t offset;                  /* */
+//	size_t decodeAmount;            /* */
+	uint8_t *decodeBuf = NULL;      /* */
+//	uint8_t *tmp;                   /* */
+	int first;                      /* */
+	int i;                          /* */
+	int numFiles = 0;               /* Number of files in the TBM archive. */
+	size_t outFileNameFormatStrLen, newLen;
+	const char fileIndexFormatStr[] = "%d";
+	size_t writeOffset = 0;
+	TBMFile *files;
 
 	if (argc != 3) {
 		fprintf(stderr, "Error: Require exactly two arguments.\n");
 		printf("Usage:\n"
 		       "\n"
 		       "    tbmconv INFILE OUTFILE\n");
-		exit(1);
+		return 1;
 	}
 
 	inFileName = argv[1];
-	outFileName = argv[2];
+
+	outFileNameFormatStrLen = strlen(argv[2]);
+	if (!(outFileNameFormatStr = (char*)
+	      malloc(sizeof(char) * (outFileNameFormatStrLen+1))))
+	{
+		goto mallocfail;
+	}
+	strcpy(outFileNameFormatStr, argv[2]);
 
 	if (!(fp = fopen(inFileName, "r"))) {
-		fprintf(stderr, "Error: Failed to open \"%s\" for reading.\n", inFileName);
-		exit(1);
+		fprintf(stderr, "Error: Failed to open \"%s\" for reading.\n",
+		        inFileName);
+		return 1;
 	}
 
 	fseek(fp, 0L, SEEK_END);
-	readAmount = ftell(fp);
+	fileSize = ftell(fp);
 	fseek(fp, 0L, SEEK_SET);
 
-	if (!(inBuf = (uint8_t*) malloc(sizeof(uint8_t)*readAmount))) {
-		fprintf(stderr, "Error: \n");
-		exit(1);
+	if (!(inBuf = (uint8_t*) malloc(sizeof(uint8_t)*fileSize))) {
+		goto mallocfail;
 	}
 
-	if (fread(inBuf, sizeof(uint8_t), readAmount, fp) != readAmount) {
-		fprintf(stderr, "read fail\n");
-		exit(1);
+	if (fread(inBuf, sizeof(uint8_t), fileSize, fp) != fileSize) {
+		fprintf(stderr, "Error: failed to read contents of \"%s\".\n",
+		        inFileName);
+		return 1;
 	}
 
-	gbytes<uint8_t,uint8_t>(inBuf, (uint8_t*) &syslbn_text, 0, 6, 0, sizeof(SYSLBN_Text));
-
-	cdc_decode((char*) &syslbn_text, sizeof(SYSLBN_Text));
-
-	gbytes<uint8_t,uint64_t>(inBuf, (uint64_t*) &syslbn_data, 0, 60, 0, sizeof(SYSLBN_Data)/8);
-
+	read_syslbn(inBuf, &syslbn_text, &syslbn_data, 0);
 	print_syslbn(&syslbn_text, &syslbn_data, 0);
 
+	/* Sanity check the SYSLBN header. */
 	assert(syslbn_data.vol1.vol1 == MAGIC_VOL1);
 	assert(syslbn_data.hdr1.hdr1 == MAGIC_HDR1);
 	assert(syslbn_data.hdr1.dataSetID_1_6 == MAGIC_NCARSY);
@@ -113,102 +120,112 @@ int main(int argc, char **argv)
 	assert(syslbn_data.hdr1.dataSetID_13_16 == MAGIC_1000);
 	assert(syslbn_data.hdr1.dataSetID_17 == MAGIC_1);
 	assert(syslbn_data.hdr2.hdr2 == MAGIC_HDR2);
-	assert(readAmount == (size_t) (syslbn_data.numBKBlocks+1)*
-	                     syslbn_data.bk*BK_BLOCK_SIZE);
+
+	/* Sanity check the length of the file. */
+	assert(fileSize == (size_t) (syslbn_data.numBKBlocks+1)*
+	                            syslbn_data.bk*BK_BLOCK_SIZE_BYTES);
 
 	/* The location of the first file control pointer is specified in the
 	 * SYSLBN.
 	 */
-
 	offset = syslbn_data.firstFCPOff * 60;
 
-	first = 1;
+	/* Read file control pointers. */
 	do {
-		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &fcp, offset%8,
-		                         60, 0, sizeof(FileControlPointer)/8);
+		read_fileControlPointer(inBuf, &fcp, offset);
+
+		/* Each file control pointer is immediately followed by a set of file
+		 * history words.
+		 */
+		read_fileHistoryWord(inBuf, &fhw_text, &fhw_data, offset+60);
+
 		print_fileControlPtr(&fcp, offset, 0, 0);
-
-		if (first) {
-			assert(fcp.nextFCPOff - 9 == syslbn_data.numBKBlocks);
-			first = 0;
-		}
-
-		// file history word always follows the FCP?
-		gbytes<uint8_t,uint64_t>(inBuf+((offset+60)/8), (uint64_t*) &fhw_data,
-		                         (offset+60)%8, 60, 0,
-		                         sizeof(FileHistoryWord_Data)/8);
-		gbytes<uint8_t,uint8_t>(inBuf+((offset+60)/8), (uint8_t*) &fhw_text,
-		                        (offset+60)%8, 6, 0,
-		                         sizeof(FileHistoryWord_Text));
-		cdc_decode((char*) &fhw_text, sizeof(FileHistoryWord_Text));
-
 		print_fileHistoryWord(&fhw_text, &fhw_data, offset+60);
 
 		offset += fcp.nextFCPOff*60;
+
+		if (!fcp.isEOF && fcp.dataBlkNum != syslbn_data.numBKBlocks-1) {
+			numFiles++;
+		}
 	} while (!fcp.isEOF);
 
-
-	int numDBF = 0;
-
-	printf("=== After header ===\n");
-	#define DBF_START_BITS 984720
-	offset = DBF_START_BITS;
-	do {
-		numDBF++;
-		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &dbf,
-		                         offset%8, 60, 0,
-		                         sizeof(DataBufferFlags)/8);
-		print_dataBufferFlags(&dbf, offset, 0, 0);
-
-		/* Advance to the next pointer. */
-		offset += 60*dbf.nextPtrOffset;
-	} while (!dbf.isEOF);
-
-// Look for the EOF marker
-	decodeAmount = (readAmount*8)/6;
-	if (!(decodeBuf = (uint8_t*) malloc(sizeof(uint8_t)*(decodeAmount + 8*numDBF /* approximate */)))) {
-		return 1;
-	}
-	gbytes<uint8_t,uint8_t>(inBuf, decodeBuf, 0, 6, 0, decodeAmount);
-	cdc_decode((char*) decodeBuf, decodeAmount);
-	if (!(eofStart = (uint8_t*) memmem(decodeBuf, decodeAmount, eofStr, eofStrLen))) {
-		fprintf(stderr, "Failed to locate EOF marker\n");
-		return 1;
-	}
-
-#define DATA_START_BIT_OFFSET (16412*60) /* + 0.5 */
-	readAmount = DIV_CEIL((eofStart-decodeBuf)*6 - DATA_START_BIT_OFFSET - 12 /* 12=2*6; EOF starts slightly sooner */,8);
-	if (!(fp = fopen(outFileName, "w"))) {
-		fprintf(stderr, "failed to open \"%s\" for writing\n", outFileName);
-		return 1;
-	}
-	offset = DATA_START_BIT_OFFSET;
-	size_t writeOffset = 0;
-	memset(decodeBuf, 0, sizeof(uint8_t)*(decodeAmount + 8*numDBF /* approximate */));
-	first = 1;
-	do {
-		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &dbf,
-		                         offset%8, 60, 0,
-		                         sizeof(DataBufferFlags)/8);
-		offset += 60;
-		gbytes<uint8_t,uint8_t>(inBuf+(offset/8), tmp, offset%8, 8, 0, DIV_CEIL((dbf.nextPtrOffset-1)*60,8));
-		memcpy(decodeBuf+(writeOffset/8), tmp, DIV_CEIL((dbf.nextPtrOffset-1)*60,8));
-		writeOffset += 60*(dbf.nextPtrOffset-1);
-		/* Align writeOffset to 64-bit boundaries, but not immediately after
-		 * the GENPRO-I header.
-		 */
-		if (!first && !dbf.isEOF && (writeOffset % 64) == 0) {
-			writeOffset += 64;
-		} else {
-			writeOffset = 64*DIV_CEIL(writeOffset,64);
+	if (numFiles > 1) {
+		if (!strstr(outFileNameFormatStr, "%d")) {
+			fprintf(stderr, "Info: \"%s\" is being appended to the output "
+			                "file name format string as there are multiple "
+			                "files in this TBM archive.\n", fileIndexFormatStr);
+			newLen = outFileNameFormatStrLen + strlen(fileIndexFormatStr);
+			if (!(outFileNameFormatStr = (char*) realloc(outFileNameFormatStr,
+			                                             sizeof(char)*(newLen+1)))) {
+				goto mallocfail;
+			}
+			strcpy(outFileNameFormatStr+outFileNameFormatStrLen, "%d");
 		}
-		first = 0;
-		offset += 60*(dbf.nextPtrOffset-1);
-	} while (!dbf.isEOF);
-	fwrite(decodeBuf, sizeof(uint8_t), DIV_CEIL(writeOffset,8), fp);
-	fclose(fp);
+	}
+
+	if (!(files = (TBMFile*) malloc(sizeof(TBMFile)*numFiles))) {
+		goto mallocfail;
+	}
+
+	/* TODO: Sanity check that number of BK blocks adds up. */
+
+	tbm_read(inBuf, syslbn_data.bk, files, numFiles);
+
+	for (i = 0; i < numFiles; i++) {
+		snprintf(outFileName, OUT_FILE_NAME_LEN, outFileNameFormatStr, i);
+		if (!(fp = fopen(outFileName, "w"))) {
+			fprintf(stderr, "failed to open \"%s\" for writing\n",
+			        outFileName);
+			return 1;
+		}
+		printf("Info: writing to \"%s\"\n", outFileName);
+
+		if (!(decodeBuf = (uint8_t*) realloc(decodeBuf,
+		                                     DIV_CEIL(files[i].size,8))))
+		{
+			goto mallocfail;
+		}
+		memset(decodeBuf, 0, sizeof(uint8_t)*DIV_CEIL(files[i].size,8));
+
+		first = 1;
+		offset = files[i].offsetToDataStart;
+		writeOffset = 0;
+		do {
+			read_dataBufferFlags(inBuf, &dbf, offset);
+			offset += 60;
+			gbytes<uint8_t,uint8_t>(inBuf+(offset/8),
+			                        decodeBuf+(writeOffset/8),
+			                        offset%8, 8, 0,
+			                        DIV_CEIL((dbf.nextPtrOffset-1)*60,8));
+
+			writeOffset += 60*(dbf.nextPtrOffset-1);
+			/* Align writeOffset to 64-bit boundaries, but not immediately after
+			 * the GENPRO-I header.
+			 */
+			if (!first && !dbf.isEOF && (writeOffset % 64) == 0) {
+				writeOffset += 64;
+			} else {
+				writeOffset = 64*DIV_CEIL(writeOffset,64);
+			}
+			first = 0;
+
+			offset += 60*(dbf.nextPtrOffset-1);
+		} while (!dbf.isEOF);
+
+		fwrite(decodeBuf, sizeof(uint8_t), DIV_CEIL(files[i].size, 8), fp);
+		fclose(fp);
+	}
+
+	printf("Info: Wrote %d files\n", numFiles);
 
 	free(inBuf);
+	free(decodeBuf);
+	free(outFileNameFormatStr);
 
 	return 0;
+
+mallocfail:
+	fprintf(stderr, "Error: memory allocation failed\n");
+	return 1;
 }
+

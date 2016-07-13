@@ -37,7 +37,228 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <assert.h>
+#include "gbytes.cpp"
+#include "cdc.hpp"
 #include "tbm.hpp"
+
+/**
+ * States for the tbm_read state machine.
+ */
+enum {
+	kExpectVOL1,
+	kExpectHDR1,
+	kExpectHDR2,
+	kExpectEOF1,
+	kExpectEndLabelGroup,
+	kExpectData,
+	kExpectDBFAfterEOF1
+};
+
+/**
+ *
+ * @param inBuf
+ * @param bk The block size (in multiples of 2048 60-bit words) specified in
+ *        the SYSLBN block.
+ * @param files A pointer to an array of `numFiles' TBMFiles structures.
+ * @param numFiles The number of files contained in the TBM file.
+ */
+void tbm_read(uint8_t *const inBuf, const uint64_t bk, TBMFile *const files,
+              int numFiles)
+{
+	size_t offset = bk * BK_BLOCK_SIZE_CDC_WORDS * 60;
+	int first = 1;
+	int i = 0;
+	int fileComplete = 0;
+	int next = kExpectVOL1;
+	DataBufferFlags dbf;
+	size_t writeOffset;
+	VOL1_Text vol1_text;
+	VOL1_Data vol1_data;
+
+	do {
+		read_dataBufferFlags(inBuf, &dbf, offset);
+
+		if (dbf.isEOD) {
+			/* Done reading the entire TBM archive. */
+			assert(dbf.nextPtrOffset == 0);
+			assert(dbf.prevPtrOffset == 1);
+			assert(dbf.isRecordStart == 1);
+			break;
+		}
+
+		/* Read data from the */
+		/* File parsing state machine. */
+		switch (next) {
+			case kExpectVOL1:
+				read_vol1(inBuf, &vol1_text,
+				          &vol1_data, offset+60);
+				assert(vol1_data.vol1 == MAGIC_VOL1);
+				next = kExpectHDR1;
+				break;
+			case kExpectHDR1:
+				read_hdr1(inBuf, &(files[i].hdr1_text),
+				          &(files[i].hdr1_data), offset+60);
+				assert(files[i].hdr1_data.hdr1 == MAGIC_HDR1);
+				assert(files[i].hdr1_data.dataSetID_1_6 == MAGIC_NCARSY);
+				assert(files[i].hdr1_data.dataSetID_7_12 == MAGIC_STEMHD);
+				assert(files[i].hdr1_data.sysCode_1_10 ==
+				       MAGIC_SYSCODE_1_10);
+				assert(files[i].hdr1_data.sysCode_11_13 ==
+				       MAGIC_SYSCODE_11_13);
+				next = kExpectHDR2;
+
+				break;
+			case kExpectHDR2:
+				read_hdr2(inBuf, &(files[i].hdr2_text),
+				          &(files[i].hdr2_data), offset+60);
+				assert(files[i].hdr2_data.hdr2 == MAGIC_HDR2);
+				next = kExpectEndLabelGroup;
+				break;
+			/* End label group after header before start of data */
+			case kExpectEndLabelGroup:
+				assert(dbf.isEOF == 1);
+				assert(dbf.nextPtrOffset == 1);
+				assert(dbf.prevPtrOffset == 9);
+				assert(dbf.endLabelGroup == 1);
+				assert(dbf.isRecordStart == 1);
+				assert(dbf.isEOD == 0);
+				next = kExpectData;
+				files[i].offsetToDataStart = offset+60;
+				writeOffset = 0;
+				break;
+			case kExpectEOF1:
+				assert(dbf.labelRecordFollows == 1);
+				// TODO: look at dbf.blockCount
+				read_hdr1(inBuf, &(files[i].eof1_text),
+				          &(files[i].eof1_data), offset+60);
+				assert(files[i].eof1_data.hdr1 == MAGIC_EOF1);
+				assert(files[i].eof1_data.dataSetID_1_6 == MAGIC_NCARSY);
+				assert(files[i].eof1_data.dataSetID_7_12 == MAGIC_STEMHD);
+				assert(files[i].eof1_data.sysCode_1_10 ==
+				       MAGIC_SYSCODE_1_10);
+				assert(files[i].eof1_data.sysCode_11_13 ==
+				       MAGIC_SYSCODE_11_13);
+				next = kExpectDBFAfterEOF1;
+				break;
+			case kExpectDBFAfterEOF1:
+				next = kExpectHDR1;
+				assert(dbf.isEOF == 1);
+				assert(dbf.endLabelGroup == 1);
+				break;
+			case kExpectData:
+				writeOffset += 60*(dbf.nextPtrOffset-1);
+				/* Align writeOffset to 64-bit boundaries, but not immediately after
+				 * the GENPRO-I header.
+				 */
+				if (!first && !dbf.isEOF && (writeOffset % 64) == 0) {
+					writeOffset += 64;
+				} else {
+					writeOffset = 64*DIV_CEIL(writeOffset,64);
+				}
+				first = 0;
+
+				/* Have we reached the data buffer flags that marks the
+				 * end of the file? If so, there should be a DBF/EOF/DBF
+				 * sequence which follows.
+				 */
+				if (dbf.isEOF && !dbf.endLabelGroup) {
+					next = kExpectEOF1;
+					files[i].size = writeOffset;
+					i++;
+					if (i == numFiles) {
+						return;
+					}
+				}
+
+				break;
+		}
+		offset += 60*dbf.nextPtrOffset;
+	} while (!fileComplete);
+}
+
+void read_syslbn(uint8_t const*const inBuf, SYSLBN_Text *const text,
+                 SYSLBN_Data *const data, const size_t offset)
+{
+	gbytes<uint8_t,uint8_t>(inBuf, (uint8_t*) text, 0, 6, 0,
+	                        sizeof(SYSLBN_Text));
+	cdc_decode((char*) text, sizeof(SYSLBN_Text));
+	gbytes<uint8_t,uint64_t>(inBuf, (uint64_t*) data, 0, 60, 0,
+	                         sizeof(SYSLBN_Data)/8);
+}
+
+void read_vol1(uint8_t const*const inBuf,
+               VOL1_Text *const text,
+               VOL1_Data *const data,
+               const size_t offset)
+{
+	gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) data,
+	                         offset%8, 60, 0,
+	                         sizeof(VOL1_Data)/8);
+	gbytes<uint8_t,uint8_t>(inBuf+(offset/8), (uint8_t*) text,
+	                        offset%8, 6, 0,
+	                         sizeof(VOL1_Text));
+	cdc_decode((char*) text, sizeof(VOL1_Text));
+}
+
+void read_hdr1(uint8_t const*const inBuf,
+               HDR1_Text *const text,
+               HDR1_Data *const data,
+               const size_t offset)
+{
+	gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) data,
+	                         offset%8, 60, 0,
+	                         sizeof(HDR1_Data)/8);
+	gbytes<uint8_t,uint8_t>(inBuf+(offset/8), (uint8_t*) text,
+	                        offset%8, 6, 0,
+	                         sizeof(HDR1_Text));
+	cdc_decode((char*) text, sizeof(HDR1_Text));
+}
+
+void read_hdr2(uint8_t const*const inBuf,
+               HDR2_Text *const text,
+               HDR2_Data *const data,
+               const size_t offset)
+{
+	gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) data,
+	                         offset%8, 60, 0,
+	                         sizeof(HDR2_Data)/8);
+	gbytes<uint8_t,uint8_t>(inBuf+(offset/8), (uint8_t*) text,
+	                        offset%8, 6, 0,
+	                         sizeof(HDR2_Text));
+	cdc_decode((char*) text, sizeof(HDR2_Text));
+}
+
+void read_fileControlPointer(uint8_t const*const inBuf,
+                             FileControlPointer *const fcp,
+                             const size_t offset)
+{
+	gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) fcp, offset%8,
+	                         60, 0, sizeof(FileControlPointer)/8);
+}
+
+void read_fileHistoryWord(uint8_t const*const inBuf,
+                          FileHistoryWord_Text *const text,
+                          FileHistoryWord_Data *const data,
+                          const size_t offset)
+{
+	gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) data,
+	                         offset%8, 60, 0,
+	                         sizeof(FileHistoryWord_Data)/8);
+	gbytes<uint8_t,uint8_t>(inBuf+(offset/8), (uint8_t*) text,
+	                        offset%8, 6, 0,
+	                         sizeof(FileHistoryWord_Text));
+	cdc_decode((char*) text, sizeof(FileHistoryWord_Text));
+}
+
+void read_dataBufferFlags(uint8_t const*const inBuf,
+                          DataBufferFlags *const dbf,
+                          const size_t offset)
+{
+	gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) dbf,
+	                         offset%8, 60, 0,
+	                         sizeof(DataBufferFlags)/8);
+}
 
 void print_vol1(VOL1_Text const*const text, VOL1_Data const*const data,
                 const size_t offset)
