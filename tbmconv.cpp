@@ -31,7 +31,8 @@
  */
 
 /**
- * Author: Nicholas DeCicco <nsd.cicco@gmail.com>
+ * @file
+ * @author Nicholas DeCicco <nsd.cicco@gmail.com>
  */
 
 #include <string.h>

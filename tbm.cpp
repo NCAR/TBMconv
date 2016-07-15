@@ -31,8 +31,9 @@
  */
 
 /**
- * Author: Nicholas DeCicco <decicco@ucar.edu>
- *                          <nsd.cicco@gmail.com>
+ * @file
+ * @author: Nicholas DeCicco <decicco@ucar.edu>
+ *                           <nsd.cicco@gmail.com>
  */
 
 #include <stdio.h>
@@ -177,6 +178,14 @@ void tbm_read(uint8_t *const inBuf, const uint64_t bk, TBMFile *const files,
 	} while (!fileComplete);
 }
 
+/**
+ * Reads a SYSLBN data structure.
+ *
+ * @param inBuf
+ * @param text
+ * @param data
+ * @param offset
+ */
 void read_syslbn(uint8_t const*const inBuf, SYSLBN_Text *const text,
                  SYSLBN_Data *const data, const size_t offset)
 {
@@ -187,6 +196,14 @@ void read_syslbn(uint8_t const*const inBuf, SYSLBN_Text *const text,
 	                         sizeof(SYSLBN_Data)/8);
 }
 
+/**
+ * Reads a VOL1 data structure.
+ *
+ * @param inBuf
+ * @param text
+ * @param data
+ * @param offset
+ */
 void read_vol1(uint8_t const*const inBuf,
                VOL1_Text *const text,
                VOL1_Data *const data,
@@ -201,6 +218,14 @@ void read_vol1(uint8_t const*const inBuf,
 	cdc_decode((char*) text, sizeof(VOL1_Text));
 }
 
+/**
+ *
+ *
+ * @param inBuf
+ * @param text
+ * @param data
+ * @param offset
+ */
 void read_hdr1(uint8_t const*const inBuf,
                HDR1_Text *const text,
                HDR1_Data *const data,
@@ -215,6 +240,14 @@ void read_hdr1(uint8_t const*const inBuf,
 	cdc_decode((char*) text, sizeof(HDR1_Text));
 }
 
+/**
+ * Reads a HDR2 structure from a buffer.
+ *
+ * @param inBuf
+ * @param text
+ * @param data
+ * @param offset
+ */
 void read_hdr2(uint8_t const*const inBuf,
                HDR2_Text *const text,
                HDR2_Data *const data,
@@ -229,6 +262,13 @@ void read_hdr2(uint8_t const*const inBuf,
 	cdc_decode((char*) text, sizeof(HDR2_Text));
 }
 
+/**
+ * Reads a FileControlPointer structure from a buffer.
+ *
+ * @param inBuf
+ * @param fcp
+ * @param offset
+ */
 void read_fileControlPointer(uint8_t const*const inBuf,
                              FileControlPointer *const fcp,
                              const size_t offset)
@@ -237,6 +277,14 @@ void read_fileControlPointer(uint8_t const*const inBuf,
 	                         60, 0, sizeof(FileControlPointer)/8);
 }
 
+/**
+ * Reads a FileHistoryWord structure from a buffer.
+ *
+ * @param inBuf
+ * @param text
+ * @param data
+ * @param offset
+ */
 void read_fileHistoryWord(uint8_t const*const inBuf,
                           FileHistoryWord_Text *const text,
                           FileHistoryWord_Data *const data,
@@ -251,6 +299,13 @@ void read_fileHistoryWord(uint8_t const*const inBuf,
 	cdc_decode((char*) text, sizeof(FileHistoryWord_Text));
 }
 
+/**
+ * Reads a DataBufferFlags structure from a buffer.
+ *
+ * @param inBuf
+ * @param dbf
+ * @param offset
+ */
 void read_dataBufferFlags(uint8_t const*const inBuf,
                           DataBufferFlags *const dbf,
                           const size_t offset)
@@ -260,6 +315,13 @@ void read_dataBufferFlags(uint8_t const*const inBuf,
 	                         sizeof(DataBufferFlags)/8);
 }
 
+/**
+ * Pretty-prints a VOL1 structure to standard out.
+ *
+ * @param text
+ * @param data
+ * @param offset
+ */
 void print_vol1(VOL1_Text const*const text, VOL1_Data const*const data,
                 const size_t offset)
 {
@@ -282,6 +344,13 @@ text->sysLevelCode, data->sysLevelCode
 );
 }
 
+/**
+ * Pretty-prints a HDR1 structure to standard out.
+ *
+ * @param text
+ * @param data
+ * @param offset
+ */
 void print_hdr1(HDR1_Text const*const text, HDR1_Data const*const data,
                 const size_t offset)
 {
@@ -314,7 +383,13 @@ printf(
 );
 }
 
-
+/**
+ * Pretty-prints a HDR2 structure to standard out.
+ *
+ * @param text
+ * @param data
+ * @param offset
+ */
 void print_hdr2(HDR2_Text const*const text, HDR2_Data const*const data,
                 const size_t offset)
 {
@@ -330,6 +405,13 @@ printf(
 #define GET_REL_OFFSET(baseOff, baseMemb, memb) \
 	baseOff + (( (char*) &(baseMemb->memb) - (char*) &(baseMemb) )/8)*60
 
+/**
+ * Pretty-prints a SYSLBN structure to standard out.
+ *
+ * @param text
+ * @param data
+ * @param offset
+ */
 void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data,
                   const size_t offset)
 {
@@ -375,6 +457,17 @@ data->fcpToBlkCtrlOff,    5, text->fcpToBlkCtrlOff
 );
 }
 
+/**
+ * Pretty-prints a FileControlPointer to standard out.
+ *
+ * @param fcp
+ * @param offset
+ * @param printHorizontal If set to true, prints the FileControlPointer
+ *        attributes in a more compact, horizontal form so that multiple
+ *        FileControlPointers may be printed to standard out in tabular form
+ *        with multiple calls to this function.
+ * @param printHeader If set to true, 
+ */ 
 void print_fileControlPtr(FileControlPointer const*const fcp,
                           const size_t offset, const int printHorizontal,
                           const int printHeader)
@@ -426,6 +519,14 @@ fcp->isEOF
 }
 }
 
+/**
+ * Pretty-prints a FileHistoryWord to standard out.
+ *
+ * @param fhw_text
+ * @param fhw_data
+ * @param offset The offset (in bits) to the location of the FileHistoryWord
+ *        in the file. This is just printed to standard out.
+ */
 void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
                            FileHistoryWord_Data const*const fhw_data,
                            const size_t offset)
@@ -470,6 +571,13 @@ fhw_data->maxRecordNum, 5, fhw_text->maxRecordNum,
 );
 }
 
+/**
+ * Pretty-prints a BlockControlPointer to standard out.
+ *
+ * @param bcp
+ * @param printHorizontal
+ * @param printHeader
+ */
 void print_blockControlPointer(BlockControlPointer const*const bcp,
                                const size_t offset, const int printHorizontal,
                                const int printHeader)
@@ -506,6 +614,13 @@ bcp->noRecordStartsHere
 }
 }
 
+/**
+ * Pretty-prints a DataBufferFlags structure to standard out.
+ *
+ * @param dbf
+ * @param printHorizontal
+ * @param printHeader
+ */
 void print_dataBufferFlags(DataBufferFlags const*const dbf,
                            const size_t offset, const int printHorizontal,
                            const int printHeader)
@@ -572,6 +687,12 @@ dbf->isRecordStart
 }
 }
 
+/**
+ * Pretty-prints a bit offset to standard out, printing also the offset in
+ * multiples of 8-bit bytes and 60-bit words.
+ *
+ * @param offset
+ */
 void print_offset(const size_t offset)
 {
 	printf("offset = %d (bits) %d+%d (8-bit bytes) %d+%d (60-bit words)\n",
