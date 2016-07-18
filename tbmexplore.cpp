@@ -357,55 +357,6 @@ getDisplay:
 	}
 
 	free(responseText);
-
-#if 0
-	#define DBF_START_BITS 984720
-	offset = DBF_START_BITS;
-	do {
-		numDBF++;
-		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &dbf,
-		                         offset%8, 60, 0,
-		                         sizeof(DataBufferFlags)/8);
-		print_dataBufferFlags(&dbf, offset);
-
-		/* Advance to the next pointer. */
-		offset += 60*dbf.nextPtrOffset;
-	} while (!dbf.isEOF);
-
-// Look for the EOF marker
-	decodeAmount = (readAmount*8)/6;
-	if (!(decodeBuf = (uint8_t*) malloc(sizeof(uint8_t)*(decodeAmount + 8*numDBF /* approximate */)))) {
-		return 1;
-	}
-	gbytes<uint8_t,uint8_t>(inBuf, decodeBuf, 0, 6, 0, decodeAmount);
-	cdc_decode((char*) decodeBuf, decodeAmount);
-	if (!(eofStart = (uint8_t*) memmem(decodeBuf, decodeAmount, eofStr, eofStrLen))) {
-		fprintf(stderr, "Failed to locate EOF marker\n");
-		return 1;
-	}
-
-#define DATA_START_BIT_OFFSET (16412*60) /* + 0.5 */
-	readAmount = DIV_CEIL((eofStart-decodeBuf)*6 - DATA_START_BIT_OFFSET - 12 /* 12=2*6; EOF starts slightly sooner */,8);
-	size_t writeOffset = 0;
-	memset(decodeBuf, 0, sizeof(uint8_t)*(decodeAmount + 8*numDBF /* approximate */));
-	do {
-		gbytes<uint8_t,uint64_t>(inBuf+(offset/8), (uint64_t*) &dbf,
-		                         offset%8, 60, 0,
-		                         sizeof(DataBufferFlags)/8);
-		offset += 60;
-		gbytes<uint8_t,uint8_t>(inBuf+(offset/8), tmp, offset%8, 8, 0, DIV_CEIL((dbf.nextPtrOffset-1)*60,8));
-		memcpy(decodeBuf+(writeOffset/8), tmp, DIV_CEIL((dbf.nextPtrOffset-1)*60,8));
-		writeOffset += 60*(dbf.nextPtrOffset-1);
-		/* Align writeOffset to 64-bit boundaries */
-		if (!dbf.isEOF && (writeOffset % 64) == 0) {
-			writeOffset += 64;
-		} else {
-			writeOffset = 64*DIV_CEIL(writeOffset,64);
-		}
-		offset += 60*(dbf.nextPtrOffset-1);
-	} while (!dbf.isEOF);
-#endif
-
 	free(inBuf);
 
 	return 0;
