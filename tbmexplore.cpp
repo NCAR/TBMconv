@@ -68,10 +68,6 @@ int main(int argc, char **argv)
 	size_t decodeAmount;
 	size_t offset;
 	DataBufferFlags dbf;
-//	char eofStr[] = "EOF1NCARSYSTEMHD";
-//	char eofStrLen = strlen(eofStr);
-//	uint8_t *eofStart, *decodeBuf;
-//	uint8_t tmp[10000];
 	char *decodeBuf = NULL;
 	char *responseText = NULL;
 	size_t responseTextLen = 0;
@@ -111,14 +107,6 @@ int main(int argc, char **argv)
 		fprintf(stderr, "read fail\n");
 		exit(1);
 	}
-
-//	assert(syslbn_data.vol1 == MAGIC_VOL1);
-//	assert(syslbn_data.hdr1 == MAGIC_HDR1);
-//	assert(syslbn_data.dataSetID_1_6 == MAGIC_NCARSY);
-//	assert(syslbn_data.dataSetID_7_12 == MAGIC_STEMHD);
-//	assert(syslbn_data.dataSetID_13_16 == MAGIC_1000);
-//	assert(syslbn_data.dataSetID_17 == MAGIC_1);
-//	assert(syslbn_data.hdr2 == MAGIC_HDR2);
 
 	while (1) {
 		fprintf(stderr, "Enter an offset or type `quit': ");
