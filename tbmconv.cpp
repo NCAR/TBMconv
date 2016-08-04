@@ -61,9 +61,7 @@ int main(int argc, char **argv)
 	uint8_t *inBuf;                 /* */
 	size_t fileSize;                /* */
 	size_t offset;                  /* */
-//	size_t decodeAmount;            /* */
 	uint8_t *decodeBuf = NULL;      /* */
-//	uint8_t *tmp;                   /* */
 	int first;                      /* */
 	int i;                          /* */
 	int numFiles = 0;               /* Number of files in the TBM archive. */
