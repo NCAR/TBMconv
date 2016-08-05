@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 	size_t outFileNameFormatStrLen, newLen;
 	const char fileIndexFormatStr[] = "%d";
 	size_t writeOffset = 0;
-	TBMFile *files;
+	TBMFile *files = NULL;
 
 	if (argc != 3) {
 		fprintf(stderr, "Error: Require exactly two arguments.\n");
@@ -148,6 +148,12 @@ int main(int argc, char **argv)
 		}
 	} while (!fcp.isEOF);
 
+	/* TODO: Sanity check that number of BK blocks adds up. */
+
+	if (!tbm_read(inBuf, syslbn_data.bk, &files, &numFiles)) {
+		return 1;
+	}
+
 	if (numFiles > 1) {
 		if (!strstr(outFileNameFormatStr, "%d")) {
 			fprintf(stderr, "Info: \"%s\" is being appended to the output "
@@ -161,14 +167,6 @@ int main(int argc, char **argv)
 			strcpy(outFileNameFormatStr+outFileNameFormatStrLen, "%d");
 		}
 	}
-
-	if (!(files = (TBMFile*) malloc(sizeof(TBMFile)*numFiles))) {
-		goto mallocfail;
-	}
-
-	/* TODO: Sanity check that number of BK blocks adds up. */
-
-	tbm_read(inBuf, syslbn_data.bk, files, numFiles);
 
 	for (i = 0; i < numFiles; i++) {
 		snprintf(outFileName, OUT_FILE_NAME_LEN, outFileNameFormatStr, i);
@@ -192,11 +190,12 @@ int main(int argc, char **argv)
 		do {
 			read_dataBufferFlags(inBuf, &dbf, offset);
 			offset += 60;
+			assert(writeOffset/8+DIV_CEIL((dbf.nextPtrOffset-1)*60,8) < DIV_CEIL(files[i].size,8));
+			assert(offset/8+DIV_CEIL((dbf.nextPtrOffset-1)*60,8) < fileSize);
 			gbytes<uint8_t,uint8_t>(inBuf+(offset/8),
 			                        decodeBuf+(writeOffset/8),
 			                        offset%8, 8, 0,
 			                        DIV_CEIL((dbf.nextPtrOffset-1)*60,8));
-
 			writeOffset += 60*(dbf.nextPtrOffset-1);
 			/* Align writeOffset to 64-bit boundaries, but not immediately after
 			 * the GENPRO-I header.
@@ -209,7 +208,7 @@ int main(int argc, char **argv)
 			first = 0;
 
 			offset += 60*(dbf.nextPtrOffset-1);
-		} while (!dbf.isEOF);
+		} while (!dbf.isEOF && offset < files[i].offsetToDataEnd);
 
 		fwrite(decodeBuf, sizeof(uint8_t), DIV_CEIL(files[i].size, 8), fp);
 		fclose(fp);

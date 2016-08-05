@@ -484,6 +484,7 @@ typedef struct {
 	HDR1_Text eof1_text;
 	HDR1_Data eof1_data;
 	size_t offsetToDataStart; /** Offset to where data (NOT the header) begins */
+	size_t offsetToDataEnd; /** Length of the file in 60-bit words */
 } TBMFile;
 
 /**
@@ -497,7 +498,8 @@ typedef struct {
 	TBMFile *files;
 } TBMArchive;
 
-void tbm_read(uint8_t *const inBuf, const uint64_t bk, TBMFile *const files, int numFiles);
+int tbm_read(uint8_t *const inBuf, const uint64_t bk, TBMFile **const files,
+             int *const numFiles);
 
 void read_syslbn(uint8_t const*const inBuf, SYSLBN_Text *const text,
                  SYSLBN_Data *const data, const size_t offset);

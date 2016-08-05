@@ -64,18 +64,21 @@ enum {
  * @param files A pointer to an array of `numFiles' TBMFiles structures.
  * @param numFiles The number of files contained in the TBM file.
  */
-void tbm_read(uint8_t *const inBuf, const uint64_t bk, TBMFile *const files,
-              int numFiles)
+int tbm_read(uint8_t *const inBuf, const uint64_t bk, TBMFile **const files,
+             int *const numFiles)
 {
 	size_t offset = bk * BK_BLOCK_SIZE_CDC_WORDS * 60;
 	int first = 1;
-	int i = 0;
+	int i = -1;
 	int fileComplete = 0;
 	int next = kExpectVOL1;
 	DataBufferFlags dbf;
 	size_t writeOffset;
 	VOL1_Text vol1_text;
 	VOL1_Data vol1_data;
+	int lastOffset;
+
+	*numFiles = 0;
 
 	do {
 		read_dataBufferFlags(inBuf, &dbf, offset);
@@ -92,28 +95,38 @@ void tbm_read(uint8_t *const inBuf, const uint64_t bk, TBMFile *const files,
 		/* File parsing state machine. */
 		switch (next) {
 			case kExpectVOL1:
+				(*numFiles)++;
+				if (!(*files = (TBMFile*) realloc(*files, sizeof(TBMFile) *
+				                                          (*numFiles))))
+				{
+					fprintf(stderr, "memory allocation failed");
+					return 0;
+				}
+				i++;
+
+				lastOffset = -1;
 				read_vol1(inBuf, &vol1_text,
 				          &vol1_data, offset+60);
 				assert(vol1_data.vol1 == MAGIC_VOL1);
 				next = kExpectHDR1;
 				break;
 			case kExpectHDR1:
-				read_hdr1(inBuf, &(files[i].hdr1_text),
-				          &(files[i].hdr1_data), offset+60);
-				assert(files[i].hdr1_data.hdr1 == MAGIC_HDR1);
-				assert(files[i].hdr1_data.dataSetID_1_6 == MAGIC_NCARSY);
-				assert(files[i].hdr1_data.dataSetID_7_12 == MAGIC_STEMHD);
-				assert(files[i].hdr1_data.sysCode_1_10 ==
+				read_hdr1(inBuf, &((*files)[i].hdr1_text),
+				          &((*files)[i].hdr1_data), offset+60);
+				assert((*files)[i].hdr1_data.hdr1 == MAGIC_HDR1);
+				assert((*files)[i].hdr1_data.dataSetID_1_6 == MAGIC_NCARSY);
+				assert((*files)[i].hdr1_data.dataSetID_7_12 == MAGIC_STEMHD);
+				assert((*files)[i].hdr1_data.sysCode_1_10 ==
 				       MAGIC_SYSCODE_1_10);
-				assert(files[i].hdr1_data.sysCode_11_13 ==
+				assert((*files)[i].hdr1_data.sysCode_11_13 ==
 				       MAGIC_SYSCODE_11_13);
 				next = kExpectHDR2;
 
 				break;
 			case kExpectHDR2:
-				read_hdr2(inBuf, &(files[i].hdr2_text),
-				          &(files[i].hdr2_data), offset+60);
-				assert(files[i].hdr2_data.hdr2 == MAGIC_HDR2);
+				read_hdr2(inBuf, &((*files)[i].hdr2_text),
+				          &((*files)[i].hdr2_data), offset+60);
+				assert((*files)[i].hdr2_data.hdr2 == MAGIC_HDR2);
 				next = kExpectEndLabelGroup;
 				break;
 			/* End label group after header before start of data */
@@ -125,20 +138,20 @@ void tbm_read(uint8_t *const inBuf, const uint64_t bk, TBMFile *const files,
 				assert(dbf.isRecordStart == 1);
 				assert(dbf.isEOD == 0);
 				next = kExpectData;
-				files[i].offsetToDataStart = offset+60;
+				(*files)[i].offsetToDataStart = offset+60;
 				writeOffset = 0;
 				break;
 			case kExpectEOF1:
 				assert(dbf.labelRecordFollows == 1);
 				// TODO: look at dbf.blockCount
-				read_hdr1(inBuf, &(files[i].eof1_text),
-				          &(files[i].eof1_data), offset+60);
-				assert(files[i].eof1_data.hdr1 == MAGIC_EOF1);
-				assert(files[i].eof1_data.dataSetID_1_6 == MAGIC_NCARSY);
-				assert(files[i].eof1_data.dataSetID_7_12 == MAGIC_STEMHD);
-				assert(files[i].eof1_data.sysCode_1_10 ==
+				read_hdr1(inBuf, &((*files)[i].eof1_text),
+				          &((*files)[i].eof1_data), offset+60);
+				assert((*files)[i].eof1_data.hdr1 == MAGIC_EOF1);
+				assert((*files)[i].eof1_data.dataSetID_1_6 == MAGIC_NCARSY);
+				assert((*files)[i].eof1_data.dataSetID_7_12 == MAGIC_STEMHD);
+				assert((*files)[i].eof1_data.sysCode_1_10 ==
 				       MAGIC_SYSCODE_1_10);
-				assert(files[i].eof1_data.sysCode_11_13 ==
+				assert((*files)[i].eof1_data.sysCode_11_13 ==
 				       MAGIC_SYSCODE_11_13);
 				next = kExpectDBFAfterEOF1;
 				break;
@@ -148,6 +161,36 @@ void tbm_read(uint8_t *const inBuf, const uint64_t bk, TBMFile *const files,
 				assert(dbf.endLabelGroup == 1);
 				break;
 			case kExpectData:
+				/* Special case: for some CODE-I TBM archives (e.g., G50452),
+				 * there are multiple GENPRO-I files per archive, but the only
+				 * indication of the start of another GENPRO-I file is that
+				 * the nextPtrOffset changes.
+				 */
+				if (lastOffset >= 0 && dbf.nextPtrOffset > lastOffset) {
+					(*files)[i].size = writeOffset;
+					(*files)[i].offsetToDataEnd = offset-60;
+					(*numFiles)++;
+					if (!(*files = (TBMFile*) realloc(*files, sizeof(TBMFile) *
+					                                          (*numFiles))))
+					{
+						fprintf(stderr, "memory allocation failed");
+						return 0;
+					}
+					i++;
+					(*files)[i].offsetToDataStart = offset;
+					writeOffset = 0;
+
+					fprintf(stderr, "Info: Detected start of another file "
+					                "at bit offset %lu (60-bit word offset "
+					                "%lu)\n", (unsigned long) offset,
+					                (unsigned long) offset/60);
+					lastOffset = -1;
+					first = 1;
+					continue;
+				}
+
+				lastOffset = dbf.nextPtrOffset;
+
 				writeOffset += 60*(dbf.nextPtrOffset-1);
 				/* Align writeOffset to 64-bit boundaries, but not immediately after
 				 * the GENPRO-I header.
@@ -165,10 +208,11 @@ void tbm_read(uint8_t *const inBuf, const uint64_t bk, TBMFile *const files,
 				 */
 				if (dbf.isEOF && !dbf.endLabelGroup) {
 					next = kExpectEOF1;
-					files[i].size = writeOffset;
+					(*files)[i].size = writeOffset;
+					(*files)[i].offsetToDataEnd = offset;
 					i++;
-					if (i == numFiles) {
-						return;
+					if (i == *numFiles) {
+						return 1;
 					}
 				}
 
@@ -176,6 +220,8 @@ void tbm_read(uint8_t *const inBuf, const uint64_t bk, TBMFile *const files,
 		}
 		offset += 60*dbf.nextPtrOffset;
 	} while (!fileComplete);
+
+	return 1;
 }
 
 /**
