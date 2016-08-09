@@ -60,6 +60,16 @@
 \draw ($(filehead1.north east)+(right:2pt)$) -- ($(FileHeadDBF1.north west)+(left:2pt)$);
 \draw ($(filehead1.south east)+(right:2pt)$) -- ($(FileHeadDBF3.south west)+(left:2pt)$);
 
+\node (FileContentsDBF1) [block,left=1.5cm of contents1.north west,anchor=north east,yshift=0.3cm] {Data Buffer Flags};
+\node (FileContentsChunk1) [block,below=0cm of FileContentsDBF1, minimum height=1.5cm] {File contents};
+\node (FileContentsDBF2) [block,gray,dashed,below=0cm of FileContentsChunk1] {Data Buffer Flags};
+\node (FileContentsChunk2) [block,gray,dashed,below=0cm of FileContentsDBF2, minimum height=1.5cm] {File contents};
+\node (FileContentsDBF3) [block,gray,dashed,below=0cm of FileContentsChunk2] {Data Buffer Flags};
+\node (FileContentsChunk3) [block,gray,dashed,below=0cm of FileContentsDBF3, minimum height=1.5cm] {File contents};
+
+\draw ($(contents1.north west)+(left:2pt)$) -- ($(FileContentsDBF1.north east)+(right:2pt)$);
+\draw ($(contents1.south west)+(left:2pt)$) -- ($(FileContentsChunk3.south east)+(right:2pt)$);
+
 \end{tikzpicture}
 
 \end{document}
