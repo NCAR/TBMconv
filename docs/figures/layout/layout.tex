@@ -1,111 +1,65 @@
 \documentclass{standalone}
+\usepackage{amsmath}
 \usepackage{multicol}
 \usepackage{tikz}
+\usepackage{multirow}
 \usepackage[lm]{sfmath} % For serif math
 
 \usetikzlibrary{arrows}
 \usetikzlibrary{calc}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{positioning}
+
 \tikzset{>=latex}
 
 \renewcommand*\familydefault{\sfdefault}
 
-\newcommand{\marker}[1]{{\tikz[remember picture] \node [inner sep=0pt] (#1) {\vphantom{A}};}}
-\newcommand{\membsp}{\hskip 1em}
-
 \begin{document}
 
-\begin{tabular}{r@{\hskip 1em}|l|l}
-\cline{2-2}
-                                                     & SYSLBN & \phantom{padd} \\
-%\cline{2-2}
-                                                     & \membsp VOL1 & \\
-%\cline{2-2}
-                                                     & \membsp HDR1 & \\
-%\cline{2-2}
-                                                     & \membsp HDR2 & \\
-%\cline{2-2}
-                                                     & \membsp \texttt{firstFCPOff} & \marker{firstFCPOff} \\
-\cline{2-2}
-\multicolumn{1}{c}{}                                 & \multicolumn{1}{c}{\(\vdots\)} \\
-\cline{2-2}
-                                                     & First File Control Pointer & \marker{fcp1} \\
-\cline{2-2}
-                                                     & \membsp \texttt{nextFCPOff} & \marker{fcp1next} \\
-\cline{2-2}
-                                                     & File History Words & \\
-\cline{2-2}
-                                                     & Block Control Pointer 1 & \\ 
-\cline{2-2}
-                                                     & Block Control Pointer 2 & \\
-\cline{2-2}
-                                                     & Block Control Pointer 3 & \\
-\cline{2-2}
-\multicolumn{1}{c}{}                                 & \multicolumn{1}{c}{\(\vdots\)} & \\
-\cline{2-2}
-                                                     & Block Control Pointer \texttt{bk} & \\
-\cline{2-2}
-                                                     & File Control Pointer & \marker{fcp2} \\
-%\cline{2-2}
-                                                     & \membsp \texttt{nextFCPOff} & \\
-\cline{2-2}
-                                                     & File History Words & \\
-\cline{2-2}
-\multicolumn{1}{c}{}                                 & \multicolumn{1}{c}{\(\vdots\)} & \\
-\cline{2-2}
-\(2048 \times \texttt{bk} \phantom{\phantom{}+ 00}\) & Data Buffer Flags & \marker{dbf1} \\
-\cline{2-2}
-\(2048 \times \texttt{bk} + \phantom{0}1\)           & VOL1 & \marker{vol1} \\
-\cline{2-2}
-\(2048 \times \texttt{bk} + \phantom{0}9\)           & Data Buffer Flags & \marker{dbf2} \\
-\cline{2-2}
-\(2048 \times \texttt{bk} + 10\)                     & HDR1 & \marker{hdr1} \\
-\cline{2-2}
-\(2048 \times \texttt{bk} + 18\)                     & Data Buffer Flags & \marker{dbf3} \\
-\cline{2-2}
-\(2048 \times \texttt{bk} + 19\)                     & HDR2 & \marker{hdr2} \\
-\cline{2-2}
-\(2048 \times \texttt{bk} + 27\)                     & Data Buffer Flags (\texttt{isEOF = 1)} & \marker{dbf4} \\
-\cline{2-2}
-\(2048 \times \texttt{bk} + 28\)                     & Data Buffer Flags & \marker{dbf5} \\
-                                                     & \membsp \texttt{nextPtrOffset} & \marker{dbf5next} \\
-\cline{2-2}
-\(2048 \times \texttt{bk} + 29\)                     & Raw Data & \marker{dat1} \\
-\cline{2-2}
-\multicolumn{1}{c}{}                                 & \multicolumn{1}{c}{\(\vdots\)} & \\
-\cline{2-2}
-                                                     & Data Buffer Flags & \marker{dbf6} \\
-\cline{2-2}
-                                                     & Raw Data & \\
-\cline{2-2}
-\multicolumn{1}{c}{}                                 & \multicolumn{1}{c}{\(\vdots\)} & \\
-\cline{2-2}
-                                                     & Data Buffer Flags (\(\mathtt{isEOF = 1}\)) & \\
-\cline{2-2}
-                                                     & Data Buffer Flags (\(\mathtt{isEOD = 1}\)) & \\
-\cline{2-2}
-                                                     & Padding (to nearest block boundary) & \\
-\cline{2-2}
-\end{tabular}
-\begin{tikzpicture}[overlay,remember picture]
-\foreach \a/\b in {firstFCPOff/fcp1, fcp1next/fcp2, dbf5next/dbf6}
-{
-	\draw [->] (\a.east) -- ++(right:0.3cm) |- (\b.east);
-}
+\begin{tikzpicture}[block/.style={draw,rectangle,inner sep=0.5em,minimum width=5cm}]
 
-\foreach \a/\b/\delta in {dbf1/vol1/1,
-                          vol1/dbf2/8,
-                          dbf2/hdr1/1,
-                          hdr1/dbf3/8,
-                          dbf3/hdr2/1,
-                          hdr2/dbf4/8,
-                          dbf4/dbf5/1}%,
-                          %dbf5/dat1/1}
-{
-\draw let \p1 = ($(\a.east)-(\b.east)$) in
-      (\a.east) arc (90:-90:{0.5*veclen(\x1,\y1)-1.5pt})
-      node [midway,anchor=west] {\(+\delta\)};
-\draw [<-] (\b.east) ++(-3pt,2pt) -- ++(1pt,0.3pt);
-}
+\node (header) [block,minimum height=2cm] {Header};
+\node [block,below=of header] (fcp1) {File Control Pointer};
+\node [block,below=0cm of fcp1] (fhw1) {File History Words};
+\node [block,below=0cm of fhw1] (bcp1) {Block Control Pointers};
+\node [block,dashed,gray,below=0cm of bcp1] (fcp2) {File Control Pointer};
+\node [block,dashed,gray,below=0cm of fcp2] (fhw2) {File History Words};
+\node [block,dashed,gray,below=0cm of fhw2] (bcp2) {Block Control Pointers};
+\node [block,below=0cm of bcp2] (fcpend) {\shortstack[c]{File Control Pointer\\ End Marker}};
+\node (filehead1) [block,below=of fcpend] {File header};
+\node (contents1) [block,below=0cm of filehead1, minimum height=2cm] {File contents};
+\node (eof1) [block,below=0cm of contents1] {EOF marker};
+\node (filehead2) [block,gray,dashed,below=0cm of eof1] {File header};
+\node (contents2) [block,gray,dashed,below=0cm of filehead2, minimum height=2cm] {File contents};
+\node (eof2) [block,gray,dashed,below=0cm of contents2] {EOF marker};
+\node (eod) [block,below=0cm of eof2] {Archive EOD marker};
+
+\node at ($(header.south)!0.5!(fcp1.north)$) [yshift=2.5pt] {\vdots};
+\node at ($(fcpend.south)!0.5!(filehead1.north)$) [yshift=2.5pt] {\vdots};
+
+\draw [<->] ($(header.north west)+(left:0.7cm)$) --
+            ($(filehead1.north west)+(left:0.7cm)$)
+      node [midway,anchor=east] {\shortstack[c]{
+          \shortstack[c]{16384\\60-bit words\\\phantom{}}\\
+          \(\left(\begin{array}{@{}c@{}}\text{15360}\\\text{64-bit words}\end{array}\right)\)
+      }};
+\foreach \x in {header, filehead1} \draw ($(\x.north west)+(left:2pt)$) -- ++(left: 1.0cm);
+
+\draw [decorate,decoration={brace,amplitude=5pt}]
+      ($(fcp1.north east)+(right:2pt)$) -- ($(bcp1.south east)+(right:2pt)$)
+      node [midway,anchor=west,xshift=0.5em] {\shortstack[l]{One FCP/FHW/BCP\\sequence per file}};
+
+\node (FileHeadDBF1) [block,right=1.5cm of filehead1.north east,anchor=south west] {\shortstack[c]{Data Buffer Flags\\ (\texttt{labelRecordFollows} = \texttt{1},\\ \texttt{isLoadPoint} = \texttt{1},\\ \texttt{isRecordStart} = \texttt{1})}};
+\node (FileHeadVOL1) [block,below=0cm of FileHeadDBF1] {\texttt{VOL1}};
+\node (FileHeadDBF2) [block,below=0cm of FileHeadVOL1] {\shortstack[c]{Data Buffer Flags\\ (\texttt{labelRecordFollows} = \texttt{1},\\ \texttt{isRecordStart} = \texttt{1})}};
+\node (FileHeadHDR1) [block,below=0cm of FileHeadDBF2] {\texttt{HDR1}};
+\node (FileHeadDBF3) [block,below=0cm of FileHeadHDR1] {\shortstack[c]{Data Buffer Flags\\ (\texttt{labelRecordFollows} = \texttt{1},\\ \texttt{isRecordStart} = \texttt{1})}};
+\node (FileHeadHDR2) [block,below=0cm of FileHeadDBF3] {\texttt{HDR2}};
+\node (FileHeadDBF3) [block,below=0cm of FileHeadHDR2] {\shortstack[c]{Data Buffer Flags\\ (\texttt{isEOF} = \texttt{1})}};
+
+\draw ($(filehead1.north east)+(right:2pt)$) -- ($(FileHeadDBF1.north west)+(left:2pt)$);
+\draw ($(filehead1.south east)+(right:2pt)$) -- ($(FileHeadDBF3.south west)+(left:2pt)$);
+
 \end{tikzpicture}
 
 \end{document}
