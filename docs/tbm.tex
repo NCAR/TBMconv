@@ -10,6 +10,9 @@
 \usepackage{cleveref}
 \usepackage{adjustbox}
 \usepackage{listings}
+\usepackage{longtable}
+\usepackage{caption}
+\usepackage{float}
 
 \usetikzlibrary{fit}
 
@@ -116,15 +119,27 @@ Length & \multicolumn{1}{l}{Bits} & Type & API & Description \\
 \noindent This work was performed under the auspices of the National Center for Atmospheric Research (NCAR) Earth Observing Laboratory (EOL) Summer Undergraduate Projects in Engineering Research (SUPER) program, which is managed by the University Corporation for Atmospheric Research (UCAR) and is funded by the National Science Foundation (NSF) (www.eol.ucar.edu).
 \newpage
 
-\begin{figure}
-	\centering
-	\includegraphics{figures/layout/layout.pdf}
-	\caption{Illustration of the general TBM file layout.}
-	\label{Fig.TBMLayout}
-\end{figure}
+\chapter{TBM File Format}
 
-Bits 59--30 of word~29 (``offset to first file control pointer"; \texttt{firstFCPOff} in the API) of the SYSLBN block (which begins at offset 0) specify the offset, in 60-bit words, from the start of the file (offset 0) to the first file control pointer (see \cref{Sec.FileControlPointer}). Each file control pointer is followed by a set of file history words (see \cref{Sec.FileHistoryWords}). After the first set of file history words (which immediately follow the first file control pointer), and up to the second file control pointer is where a series of block control pointers (see \cref{Sec.BlockControlPointer}) reside. Each block control pointer is one 60-bit word in length, and there are \texttt{numBKBlocks} of them; as there are this many, one should find the following equivalencies:
+\section{Introduction}
 
+The Ampex TMS-4 Terabit Memory System (``TBM") was a tape storage system used at NCAR from approximately the mid 1970s through to the mid 1980s. Much of the GENPRO-I data from this time period on HPSS was formerly only available in TBM-formatted archives. This document describes the format of these archives, as well as the TBMconv software framework which may be used to extract the contents of TBM files.
+
+\section{TBM Format Overview}
+
+A TBM file begins with a SYSLBN block (see \cref{Sec.SYSLBN}) at offset 0. This block contains information such as:
+\begin{itemize}
+	\item the machine used to generate the TBM file (e.g., the Cray 1),
+	\item the data type (e.g., CDC DPC),
+	\item the size of a ``BK block," and
+	\item offsets to specific locations in the file.
+\end{itemize}
+
+\noindent Of particular interest are the ``BK block" size (expressed in multiples of 2048 60-bit words), the data type, and the offsets.
+
+Bits 59--30 of word~29 (``offset to first file control pointer"; \texttt{firstFCPOff} in the API) of this SYSLBN block specify the offset, in 60-bit words, from the start of the file (offset 0) to the first file control pointer (see \cref{Sec.FileControlPointer}). Each file control pointer is followed by a set of file history words (see \cref{Sec.FileHistoryWords}) and a set of block control pointers (see \cref{Sec.BlockControlPointer}). Each block control pointer is one 60-bit word in length, and there are a total of \texttt{numBKBlocks} of them.
+
+For a TBM archive containing only one file, one should find that
 \begin{align*}
 	\mathtt{numBKBlocks} =
 	\underbrace{\mathtt{nextFCPOff}}_{\shortstack[c]{
@@ -142,11 +157,15 @@ The length of the file is indicated by the values of \texttt{numBKBlocks} and \t
 
 The portions of a TBM file where actual data resides are broken into many \textit{data records}; each data record is preceeded by a data buffer flags (see \cref{Sec.DataBufferFlag}) word, also known as a ``record control word." Each data buffer flag contains an offset (relative to it) specifying the location of the next data buffer flag (\texttt{nextPtrOffset} in the \texttt{DataBufferFlags} struct).
 
-Actual data begins at one TLIB/BK block into the file (after some \texttt{DataBufferFlags} and \texttt{VOL1}/\texttt{HDR1}/\texttt{HDR2} metadata). The length of a TLIB block is
-\begin{align*}
-	\text{length}_\text{60-bit words} &= 2048 \times \texttt{bk} \mathrm{,} \\
-	\text{length}_\text{64-bit words} &= \dfrac{2048 \times \texttt{bk} \times 60}{64} \mathrm{.}
-\end{align*}
+File data (including metadata) begins at one TLIB/BK block into the file and ends with a Data Buffer Flag whose \texttt{isEOD} property is set to \(1\); padding follows afterwards as needed to make the total file size an integer multiple of TLIB/BK blocks long. Files are bookended by metadata consisting of alternating Data Buffer Flags and \texttt{VOL1}/\texttt{HDR1}/\texttt{HDR2} metadata at the beginning of each file and a \texttt{DataBufferFlags} structure at the end. The length of a TLIB block in terms of 60-bit words is
+\[
+	\text{total TBM file length}_\text{60-bit words} = 2048 \times \texttt{bk} \mathrm{,}
+\]
+
+\noindent or in terms of 64-bit words,
+\[
+	\text{total TBM file length}_\text{64-bit words} = \dfrac{2048 \times \texttt{bk} \times 60}{64} \mathrm{.}
+\]
 
 For example, for the default \texttt{bk} value of \(8\),
 \begin{align*}
@@ -154,7 +173,115 @@ For example, for the default \texttt{bk} value of \(8\),
 	\text{length}_\text{64-bit words} &= \dfrac{2048 \times 8 \times 60}{64} = 15360 \text{ 64-bit words} \mathrm{.}
 \end{align*}
 
+A schematic diagram illustrating the most important elements of the TBM format is shown in \Cref{Fig.TBMLayout}. An example from an actual file (NCAR/EOL dataset PHOENIX-78 file G50233) of offsets to data structures and some of their values illustrating the format is shown in \Cref{Tbl.G50233Layout}.
+
+\begin{figure}
+	\centering
+	\includegraphics{figures/layout/layout.pdf}
+	\caption{Illustration of the general TBM file layout.}
+	\label{Fig.TBMLayout}
+\end{figure}
+
+\begin{center}
+\label{Tbl.G50233Layout}
+\captionof{table}{PHOENIX-78 Dataset file G50233 layout}
+\begin{longtable}{rll}
+\hline
+      0 & SYSLBN \\
+\hline
+     51 & FCP \\
+52--59 & FHW & (\texttt{dataSetID} = '\texttt{NCARSYSTEMHD10001}') \\
+60--110 & BCP & \\
+\hline
+111 & FCP \\
+112--119 & FHW & (\texttt{dataSetID} = '\texttt{NCARSYSTEMHD10002}') \\
+120--203 & BCP \\
+\hline
+204 & FCP \\
+205--212 & FHW & (\texttt{dataSetID} = '\texttt{NCARSYSTEMHD10003}') \\
+213--270 & BCP \\
+\hline
+271 & FCP \\
+272--279 & FHW & (\texttt{dataSetID} = '\texttt{NCARSYSTEMHD10004}') \\
+280--298 & BCP \\
+\hline
+    299 & FCP & (\texttt{isEOF} = 1) \\
+\hline
+\multicolumn{1}{c}{\vdots} \\
+\hline
+  16384 & DBF  & (\texttt{labelRecordFollows} = 1, \texttt{isLoadPoint} = 1, \texttt{isRecordStart} = 1) \\
+\hline
+  16385 & VOL1 & (\texttt{volSerialName1} = '\texttt{G50233}', \texttt{tbmVolSerial} = '\texttt{TL0110}') \\
+  16393 & DBF  & (\texttt{labelRecordFollows} = 1, \texttt{isRecordStart} = 1) \\
+  16394 & HDR1 & (\texttt{dataSetID} = '\texttt{NCARSYSTEMHD10001}') \\
+  16402 & DBF  & (\texttt{labelRecordFollows} = 1, \texttt{isRecordStart} = 1) \\
+  16403 & HDR2 & \\
+  16411 & DBF  & (\texttt{isEOF} = 1, \texttt{isRecordStart} = 1) \\
+\hline
+  16412 & DBF  & (\texttt{isRecordStart} = 1) \\
+\multicolumn{1}{c}{\vdots} \\
+ 840063 & DBF & (\texttt{isEOF} = 1) \\
+\hline
+ 840064 & DBF  & (\texttt{labelRecordFollows} = 1) \\
+ 840065 & EOF1 & (\texttt{dataSetID} = '\texttt{NCARSYSTEMHD10001}') \\
+ 840073 & DBF  & (\texttt{isEOF} = 1, \texttt{endLabelGroup} = 1) \\
+\hline
+ 840074 & DBF  & (\texttt{labelRecordFollows} = 1) \\
+ 840075 & HDR1 & (\texttt{dataSetID} = '\texttt{NCARSYSTEMHD10002}') \\
+ 840083 & DBF  & (\texttt{labelRecordFollows} = 1) \\
+ 840084 & HDR2 & \\
+ 840092 & DBF  & (\texttt{isEOF} = 1, \texttt{endLabelGroup} = 1) \\
+\hline
+ 840093 & DBF  & \\
+\multicolumn{1}{c}{\vdots} \\
+2200434 & DBF  & (\texttt{isEOF} = 1) \\
+\hline
+2200435 & DBF  & (\texttt{labelRecordFollows} = 1) \\
+2200436 & EOF1 & (\texttt{dataSetID} = '\texttt{NCARSYSTEMHD10002}', \texttt{blockCount} = 3317) \\
+2200444 & DBF  & (\texttt{isEOF} = 1, \texttt{endLabelGroup} = 1) \\
+\hline
+2200445 & DBF  & (\texttt{labelRecordFollows} = 1) \\
+2200446 & HDR1 & (\texttt{dataSetID} = '\texttt{NCARSYSTEMHD10003}') \\
+2200454 & DBF  & (\texttt{labelRecordFollows} = 1) \\
+2200455 & HDR2 & \\
+2200463 & DBF  & (\texttt{isEOF} = 1, \texttt{endLabelGroup} = 1) \\
+\hline
+2200464 & DBF  & \\
+\multicolumn{1}{c}{\vdots} \\
+3139325 & DBF  & (\texttt{isEOF} = 1) \\
+\hline
+3139326 & DBF  & (\texttt{labelRecordFollows} = 1) \\
+3139327 & EOF1 & (\texttt{dataSetID} = '\texttt{NCARSYSTEMHD10003}', \texttt{blockCount} = 2289) \\
+3139335 & DBF  & (\texttt{isEOF} = 1, \texttt{endLabelGroup} = 1) \\
+\hline
+3139336 & DBF  & (\texttt{labelRecordFollows} = 1) \\
+3139337 & HDR1 & (\texttt{dataSetID} = '\texttt{NCARSYSTEMHD10004}') \\
+3139345 & DBF  & (\texttt{labelRecordFollows} = 1) \\
+3139346 & HDR2 & \\
+3139354 & DBF  & (\texttt{isEOF} = 1, \texttt{endLabelGroup} = 1) \\
+\hline
+3139355 & DBF  & \\
+\multicolumn{1}{c}{\vdots} \\
+3431236 & DBF  & (\texttt{isEOF}) \\
+\hline
+3431237 & DBF  & (\texttt{labelRecordFollows} = 1) \\
+3431238 & EOF1 & (\texttt{dataSetID} = '\texttt{NCARSYSTEMHD10004}', \texttt{blockCount} = 711) \\
+3431246 & DBF  & (\texttt{isEOF} = 1, \texttt{endLabelGroup} = 1) \\
+\hline
+3431247 & DBF  & (\texttt{nextPtrOffset} = 0, \texttt{prevPtrOffset} = 1, \texttt{isEOD} = 1, \texttt{isRecordStart} = 1) \\
+\hline
+\end{longtable}
+\end{center}
+
+\subsection{Minimum Requirements for Reading a TBM Archive}
+
+For a TBM archive containing only one file, the only information from the first TLIB/BK block (containing the SYSLBN data structure as well as the file control pointers, file history words, and buffer control pointers) that is strictly necessary for reading a TBM archive is the ``BK block" size (specified in the \texttt{bk} element of the \texttt{SYSLBN\_Data} structure in the API). With this information, the file contents can be extracted by stripping data buffer flags from the second TLIB/BK block through to the end of the file (denoted by a data buffer flags word with \texttt{isEOD} set to 1).
+
+For a TBM archive containing multiple files, the same is sufficient, except that one must make note of the start and end of separate files within the archive, denoted by special data buffer flag / \texttt{VOL1} / \texttt{HDR1} / \texttt{HDR2} sequences described previously.
+
 \chapter{Using \texttt{tbmexplore}}
+
+\texttt{tbmexplore} is a command-line utility for interactively exploring/investigating the contents TBM files. \texttt{tbmexplore} permits dumping contents of a TBM file at arbitrary offsets, optionally decoding the 
 
 \begin{lstlisting}[language=]
 $ tbmexplore G51452
@@ -228,9 +355,83 @@ curCtrlCardOpenOff =    35 ("    8")
 fcpToBlkCtrlOff    =    10 ("    J")
 \end{lstlisting}
 
-\chapter{Reference}
+\chapter{TBM Format and API Reference}
 
-\section{Accessability critera} \label{Sec.AccessibilityCriteria}
+\section{API Introduction}
+
+\texttt{tbmconv} includes a header file (\texttt{tbm.hpp}) containing data structures useful for reading TBM files, as well as a set of routines for printing the contents of these structures to the terminal (contained in \texttt{tbm.cpp}). These data structures map to structures specified in the reference as illustrated in \cref{Tbl.DataStructures}.
+
+\begin{table}[H]
+\centering
+\caption{}
+\label{Tbl.DataStructures}
+\begin{tabular}{lll}
+\toprule
+\multirow{2}{*}{Data structure} &
+\multicolumn{2}{c}{API data structure names} \\
+& Raw data & DPC \\
+\midrule
+SYSLBN & \texttt{SYSLBN\_Data} & \texttt{SYSLBN\_Text} \\
+VOL1   & \texttt{VOL1\_Data} & \texttt{VOL1\_Text} \\
+HDR1   & \texttt{HDR1\_Data} & \texttt{HDR1\_Text} \\
+HDR2   & \texttt{HDR2\_Data} & \texttt{HDR2\_Text} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The functions provided in \texttt{tbm.cpp} are:
+
+\begin{lstlisting}[language=c]
+void read_syslbn(uint8_t const*const inBuf, SYSLBN_Text *const text,
+                 SYSLBN_Data *const data, const size_t offset);
+void read_fileHistoryWord(uint8_t const*const inBuf,
+                          FileHistoryWord_Text *const text,
+                          FileHistoryWord_Data *const data,
+                          const size_t offset);
+void read_dataBufferFlags(uint8_t const*const inBuf,
+                          DataBufferFlags *const dbf,
+                          const size_t offset);
+void read_fileControlPointer(uint8_t const*const inBuf,
+                             FileControlPointer *const fcp,
+                             const size_t offset);
+void read_vol1(uint8_t const*const inBuf,
+               VOL1_Text *const text,
+               VOL1_Data *const data,
+               const size_t offset);
+void read_hdr1(uint8_t const*const inBuf,
+               HDR1_Text *const text,
+               HDR1_Data *const data,
+               const size_t offset);
+void read_hdr2(uint8_t const*const inBuf,
+               HDR2_Text *const text,
+               HDR2_Data *const data,
+               const size_t offset);
+
+void print_vol1(VOL1_Text const*const text, VOL1_Data const*const data,
+                const size_t offset);
+void print_hdr1(HDR1_Text const*const text, HDR1_Data const*const data,
+                const size_t offset);
+void print_hdr2(HDR2_Text const*const text, HDR2_Data const*const data,
+                const size_t offset);
+
+void print_syslbn(SYSLBN_Text const*const text, SYSLBN_Data const*const data,
+                  const size_t offset);
+void print_fileControlPtr(FileControlPointer const*const fcp,
+                          const size_t offset, const int printHorizontal,
+                          const int printHeader);
+void print_fileHistoryWord(FileHistoryWord_Text const*const fhw_text,
+                           FileHistoryWord_Data const*const fhw_data,
+                           const size_t offset);
+void print_blockControlPointer(BlockControlPointer const*const bcp,
+                               const size_t offset, const int printHorizontal,
+                               const int printHeader);
+void print_dataBufferFlags(DataBufferFlags const*const dbf,
+                           const size_t offset, const int printHorizontal,
+                           const int printHeader);
+void print_offset(const size_t offset);
+\end{lstlisting}
+
+\section{Accessibility critera} \label{Sec.AccessibilityCriteria}
 
 The accessability critera characters are a character which indicate ``any restrictions on who may have access to the information in this file. A space means unlimited access; any other character means special handling, in a manner to be defined."
 
@@ -240,9 +441,9 @@ The accessability critera characters are a character which indicate ``any restri
 %                                                                                     %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{SYSLBN}
+\section{SYSLBN} \label{Sec.SYSLBN}
 
-A SYSLBN block appears at the start of every TBM file, at offset 0. The SYSLBN block could be thought of as being comprised of a header (words 0 through 3), a VOL1 label (words 4--11), a HDR1 label (words 12--19), a HDR2 label (words 27--28), and finally pointers to various locations in the file (words 28--30).
+A SYSLBN block appears at the start of every TBM file, at offset 0. The SYSLBN block could be thought of as being comprised of a header (words 0 through 3), a VOL1 label (words 4--11), a HDR1 label (words 12--19), a HDR2 label (words 20--27), and finally pointers to various locations in the file (words 28--30).
 
 %%%%%%%%%%%%%%%%% WORD 0 (0-based indices) %%%%%%%%%%%%%%%%%%
 
@@ -973,7 +1174,7 @@ Note that \texttt{fcpToBlkCtrlOff} appears to be off by one; it has a value of 1
 
 \section{File History Words} \label{Sec.FileHistoryWords}
 
-The file histoy words immediately follow every file control pointer.
+The file histoy words immediately follow every file control pointer, hence why the numbering of these words starts at 1.
 
 %%%%%%%%%%%%%%%%% WORD 1 (1-based indices) %%%%%%%%%%%%%%%%%%
 
@@ -1138,6 +1339,8 @@ The file histoy words immediately follow every file control pointer.
 
 \section{Block Control Pointer (BCP)} \label{Sec.BlockControlPointer}
 
+Sets of Block Control Pointers follow each set of File History Words, which in turn folow each File Control Pointer.
+
 \controlword{
 \rotate{No Rec. Start} &
 \multicolumn{2}{c}{\rotate{Open}} &
@@ -1161,9 +1364,9 @@ The file histoy words immediately follow every file control pointer.
 
 \subsubsection{Representation in NCAR Technical Note}
 
-Note that the way the block control pointer is depicted in the NCAR Technical Note is rather confusing; the technical note shows what at first appear to be three distinct ``block control pointers," one which is ``word 9", another which is word ``\(+9+M-1\)", and another which is word ``\(+9+M\)". Really what the technical note is trying to convey is that there are \(M\) block control pointers (equal to \texttt{bk}); the first block control pointer starts at an offset \(+9\) after the first file control pointer; and immediately after the last block control pointer (\(+9+M\)) is another file control pointer.
+Note that the way the block control pointer is depicted in the NCAR Technical Note is rather confusing; the technical note shows what at first appear to be three distinct ``block control pointers," one which is ``word 9", another which is word ``\(+9+M-1\)", and another which is word ``\(+9+M\)". Really what the technical note is trying to convey is that there are \(M\) block control pointers per file; the first block control pointer starts at an offset \(+9\) after the first file control pointer; and immediately after the last block control pointer (\(+9+M\)) is another file control pointer. If there are multiple files in a TBM archive, there will be multiple sets of block control pointers.
 
-\subsubsection{\texttt{lastRecord}}
+\subsubsection{The \texttt{lastRecord} field}
 
 \texttt{lastRecord} is the one-based index of the last record to appear in the \(\mathtt{bk} \times 2048\)-sized data block corresponding to a given buffer control pointer. For example, using \texttt{tbmexplore} to view the first three buffer control pointers shows that the ``last record in data block N" for these are 35, 72, and 108.
 
@@ -1191,7 +1394,7 @@ Using \texttt{tbmexplore} to dump the offsets of the data buffer flags containin
 
 \section{Data Buffer Flags} \label{Sec.DataBufferFlag}
 
-Also known as the ``record control word" or the ``data buffer field."
+The Data Buffer Flags are interspersed within actual file data and bookend the start and end of each file. The first Data Buffer Flag in a TBM archive is located at the beginning of the second \texttt{TLIB}/\texttt{bk} block. All successive Data Buffer Flags can be found by moving forward in the file by the amount specified in each \texttt{nextPtrOffset}. The Data Buffer Flags are also referred to as the ``record control word" or the ``data buffer field."
 
 \controlword{
 \rotate{Record start} &
@@ -1285,9 +1488,18 @@ Observe that the block count changes from 0 to 11259; in this file, there are 11
 
 \controlworddesc{
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-18 & 59--42 & & & \\
-42 & 41--0  & & & Same as in HDR1. \\
+18 & 59--42 & DPC & & The string ``\texttt{EOF1}". \\
+42 & 41--0  & DPC & & Same as in HDR1. \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 }
+
+\begin{lstlisting}
+          | offset to | data blk | buffer ptr | file | file        | 2nd  | is        | is
+offset    | next FCP  | number   | offset     | type | disposition | type | obsolete? | EOF?
+==========+===========+==========+============+======+=============+======+===========+======
+       51 |       349 |        0 |        201 |    0 |           0 |    0 |         0 |    0
+      400 |        10 |      339 |       8486 |    0 |           0 |    0 |         0 |    0
+      410 |         0 |        0 |          0 |    0 |           0 |    0 |         0 |    1
+\end{lstlisting}
 
 \end{document}
