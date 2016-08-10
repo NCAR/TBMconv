@@ -69,6 +69,7 @@ int main(int argc, char **argv)
 	const char fileIndexFormatStr[] = "%d";
 	size_t writeOffset = 0;
 	TBMFile *files;
+	int filesWritten = 0;
 
 	if (argc != 3) {
 		fprintf(stderr, "Error: Require exactly two arguments.\n");
@@ -171,6 +172,11 @@ int main(int argc, char **argv)
 	tbm_read(inBuf, syslbn_data.bk, files, numFiles);
 
 	for (i = 0; i < numFiles; i++) {
+		if (files[i].size == 0) {
+			fprintf(stderr, "Info: file %d has zero size, skipping\n", i);
+			continue;
+		}
+
 		snprintf(outFileName, OUT_FILE_NAME_LEN, outFileNameFormatStr, i);
 		if (!(fp = fopen(outFileName, "w"))) {
 			fprintf(stderr, "failed to open \"%s\" for writing\n",
@@ -213,9 +219,11 @@ int main(int argc, char **argv)
 
 		fwrite(decodeBuf, sizeof(uint8_t), DIV_CEIL(files[i].size, 8), fp);
 		fclose(fp);
+
+		filesWritten++;
 	}
 
-	printf("Info: Wrote %d files\n", numFiles);
+	printf("Info: Wrote %d files\n", filesWritten);
 
 	free(inBuf);
 	free(decodeBuf);
