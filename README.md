@@ -32,5 +32,5 @@ $ make
 
 ### Documentation
 
-A PDF document describing the GENPRO-I format is available as a part of this
+A PDF document describing the TBM file format is available as a part of this
 project: [tbm.pdf](https://ncar.github.io/TBMconv/files/tbm.pdf).
